@@ -7,7 +7,7 @@ kaplay({
     crisp: false
 })
 
-const MAP_SIZE = 5000;
+const MAP_SIZE = 10000;
 const GRID_SIZE = 50;
 const ZOOM_LEVEL = 0.6;
 
@@ -109,16 +109,16 @@ const player = add([
     "player",
 ]);
 
-
-
 camScale(ZOOM_LEVEL);
+
+let attackOffset = 0;
 
 onUpdate(() => {
     camPos(player.pos);
 
     const mouseWorld = toWorld(mousePos());
     const direction = mouseWorld.sub(player.pos);
-    player.angle = direction.angle() + 90;
+    player.angle = direction.angle() + 90 + attackOffset;
 })
 
 const SPEED = 500;
@@ -159,16 +159,12 @@ const miniPlayer = add([
     z(101),
     pos(0, 0)
 ]);
-let attackOffset = 0;
+
 onUpdate(() => {
     const miniX = minimapBg.pos.x + (player.pos.x * MINI_SCALE);
     const miniY = minimapBg.pos.y + (player.pos.y * MINI_SCALE);
 
     miniPlayer.pos = vec2(miniX, miniY);
-
-    const mouseWorld = toWorld(mousePos());
-    const direction = mouseWorld.sub(player.pos);
-    player.angle = direction.angle() + 90 + attackOffset;
 });
 
 const PARTY_SLOT_SIZE = (MINI_SIZE - 15) / 4;
@@ -236,7 +232,6 @@ add([
     opacity(0.6)
 ])
 
-
 let equippedWeapon = null;
 
 for (let i = 0; i < 5; i++) {
@@ -262,22 +257,22 @@ for (let i = 0; i < 5; i++) {
 
         if (i === 0) {
             equippedWeapon = player.add([
-                        sprite("sword"),
-                        pos(-500, -500),
-                        anchor("left"),
-                        scale(1),
-                        rotate(0),
-                        "weapon"
-                    ]);
+                sprite("sword"),
+                pos(-500, -500),
+                anchor("left"),
+                scale(1),
+                rotate(0),
+                "weapon"
+            ]);
         } else if (i === 1) {
             equippedWeapon = player.add([
-                        sprite("axe"),
-                        pos(-500, -500),
-                        anchor("left"),
-                        scale(1),
-                        rotate(0),
-                        "weapon"
-                    ]);
+                sprite("axe"),
+                pos(-500, -500),
+                anchor("left"),
+                scale(1),
+                rotate(0),
+                "weapon"
+            ]);
         }
     })
 
@@ -317,6 +312,7 @@ add([
     color(255, 255, 255),
     z(101)
 ])
+
 // ================
 // == Shield bar ==
 // ================
@@ -349,9 +345,11 @@ add([
     color(255, 255, 255),
     z(101)
 ])
+
 // =================
 // == Leaderboard ==
 // =================
+
 add([
     rect(350, 250),
     fixed(),
@@ -393,6 +391,7 @@ for (let i = 0; i < 10; i++) {
         z(101)
     ])
 }
+
 // ==================
 // == Attack logic ==
 // ==================
@@ -403,8 +402,6 @@ onMousePress(() => {
     if (isAttacking || !equippedWeapon) return;
     
     isAttacking = true;
-    
-    const attackObj = { val: 0 };
     
     tween(
         0, -40, 0.1, 
@@ -420,8 +417,14 @@ onMousePress(() => {
         })
     })
 });
-const WORLD_SEED = 987654321; 
-const TILE_GAP = 100;
+
+// ====================
+// == World Generation ==
+// ====================
+
+const WORLD_SEED = 12345; 
+const TOTAL_TREES = 20; 
+const TOTAL_ROCKS = 20; 
 const WORLD_OBJECTS = [];
 
 let currentSeed = WORLD_SEED;
@@ -430,26 +433,22 @@ function seededRandom() {
     return currentSeed / 233280;
 }
 
-for (let x = 0; x < MAP_SIZE; x += TILE_GAP) {
-    for (let y = 0; y < MAP_SIZE; y += TILE_GAP) {
-        
-        const chance = seededRandom();
-        const offsetX = seededRandom() * 40 - 20;
-        const offsetY = seededRandom() * 40 - 20;
-        
-        let type = null;
-        if (chance < 0.05) type = "tree";
-        else if (chance > 0.05 && chance < 0.08) type = "rock";
+for (let i = 0; i < TOTAL_TREES; i++) {
+    WORLD_OBJECTS.push({
+        x: seededRandom() * MAP_SIZE,
+        y: seededRandom() * MAP_SIZE,
+        type: "tree",
+        id: null
+    });
+}
 
-        if (type) {
-            WORLD_OBJECTS.push({
-                x: x + offsetX,
-                y: y + offsetY,
-                type: type,
-                id: null 
-            });
-        }
-    }
+for (let i = 0; i < TOTAL_ROCKS; i++) {
+    WORLD_OBJECTS.push({
+        x: seededRandom() * MAP_SIZE,
+        y: seededRandom() * MAP_SIZE,
+        type: "rock",
+        id: null
+    });
 }
 
 onUpdate(() => {
@@ -464,24 +463,25 @@ onUpdate(() => {
         if (dist < renderDist && !obj.id) {
             if (obj.type === "tree") {
                 obj.id = add([
-                    circle(30),
+                    circle(20),
                     pos(obj.x, obj.y),
-                    color(34, 139, 34), 
                     color(20, 100, 20), 
                     area(),
                     body({ isStatic: true }),
                     anchor("center"),
+                    scale(3),
                     z(-10),
                     "tree"
                 ]);
             } else if (obj.type === "rock") {
                 obj.id = add([
-                    circle(25),
+                    circle(20),
                     pos(obj.x, obj.y),
-                    color(100, 100, 100),
+                    color(120, 120, 120),
                     area(),
                     body({ isStatic: true }),
                     anchor("center"),
+                    scale(3),
                     z(-10),
                     "rock"
                 ]);
