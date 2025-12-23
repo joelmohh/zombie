@@ -21,7 +21,7 @@ let attackOffset = 0;
 loadSprite("player", "player.svg")
 loadSprite("sword", "1.svg")
 loadSprite("axe", "2.svg")
-loadSprite("arrow", "3.svg")
+loadSprite("bow", "3.svg")
 loadSprite("hands", "hands.svg")
 
 /*
@@ -165,6 +165,8 @@ slots.forEach(slot => {
         slots.forEach(s => s.style.border = '2px solid white');
         slot.style.border = '2px solid yellow';
 
+        setTimeout(() => document.getElementById("game").focus(), 10);
+
         const itemType = slot.getAttribute('data-item');
 
         if (equippedWeapon) {
@@ -192,14 +194,14 @@ slots.forEach(slot => {
                 rotate(0),
                 "weapon"
             ]);
-        } else if (itemType === "arrow") {
+        } else if (itemType === "bow") {
             equippedWeapon = player.add([
-                sprite("arrow"),
+                sprite("bow"),
                 pos(-500, -700),
                 anchor("left"),
                 scale(1),
                 rotate(0),
-                "weapon", "arrow"
+                "weapon", "bow"
             ]);
         }
     })
@@ -261,13 +263,13 @@ let canShoot = true;
 const FIRE_RATE = 0.5;
 
 onMousePress(() => {
-    if (!isAttacking || !equippedWeapon) return;
+    if (isAttacking || !equippedWeapon) return;
 
     if (equippedWeapon.is("arrow")) {
         if (!canShoot) return;
         canShoot = false;
 
-        wait(FIRE_RATE, () => camShoot = true);
+        wait(FIRE_RATE, () => canShoot = true);
 
         const mouseWorld = toWorld(mousePos());
         const direction = mouseWorld.sub(player.pos).unit();
