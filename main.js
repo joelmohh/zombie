@@ -14,6 +14,8 @@ const ZOOM_LEVEL = 0.6;
 loadSprite("player", "player.svg");
 loadSprite("sword", "1.svg");
 loadSprite("axe", "2.svg");
+loadSprite("hands", "hands.svg");
+loadSprite("arrow", "3.svg");
 
 add([
     rect(MAP_SIZE, MAP_SIZE),
@@ -107,7 +109,22 @@ const player = add([
     area({ shape: new Circle(vec2(0), 455) }),
     body(),
     "player",
+    z(10)
 ]);
+
+player.add([
+    sprite("hands"),
+    pos(250, -300),
+    anchor("left"),
+    z(9)
+])
+player.add([
+    sprite('hands'),
+    pos(-250, -300),
+    anchor("right"),
+    scale(1, -1),
+    z(9)
+])
 
 camScale(ZOOM_LEVEL);
 
@@ -223,10 +240,10 @@ createMapBtn("PARTY", 2, [120, 0, 200]);
 // ===============
 
 add([
-    rect(460, 90),
+    rect(460, 60),
     fixed(),
-    pos(440, height() - 110),
-    color(50, 50, 50),
+    pos(440, 400),
+    color(80, 80, 80),
     outline(2, [255, 255, 255]),
     z(100),
     opacity(0.6)
@@ -236,9 +253,9 @@ let equippedWeapon = null;
 
 for (let i = 0; i < 5; i++) {
     const slot = add([
-        rect(80, 80),
+        rect(50, 50),
         fixed(),
-        pos(450 + i * 90, height() - 105),
+        pos(450 + i * 90, 400 + 5),
         color(100, 100, 100),
         outline(2, [255, 255, 255]),
         z(101),
@@ -246,6 +263,35 @@ for (let i = 0; i < 5; i++) {
         area(),
         "inventory_slot"
     ])
+
+    if (i === 0) {
+        slot.add([
+            sprite("sword"),
+            pos(40, 40),
+            anchor("center"),
+            rotate(-45),
+            scale(0.04),
+            z(102)
+        ])
+    } else if (i === 1) {
+        slot.add([
+            sprite("axe"),
+            pos(40, 40),
+            anchor("center"),
+            scale(0.04),
+            rotate(-45),
+            z(102)
+        ])
+    } else if (i === 2) {
+        slot.add([
+            sprite("arrow"),
+            pos(40, 40),
+            anchor("center"),
+            scale(0.04),
+            rotate(45),
+            z(102)
+        ])
+    }
 
     slot.onClick(() => {
         slot.color = rgb(150, 150, 150);
@@ -272,6 +318,15 @@ for (let i = 0; i < 5; i++) {
                 scale(1),
                 rotate(0),
                 "weapon"
+            ]);
+        } else if (i === 2) {
+            equippedWeapon = player.add([
+                sprite("arrow"),
+                pos(-500, -700),
+                anchor("left"),
+                scale(1),
+                rotate(0),
+                "weapon", "arrow"
             ]);
         }
     })
@@ -395,22 +450,54 @@ for (let i = 0; i < 10; i++) {
 // ==================
 // == Attack logic ==
 // ==================
-
 let isAttacking = false;
+let canShoot = true;
+const FIRE_RATE = 0.5; // Tempo de espera entre os tiros em segundos
 
 onMousePress(() => {
     if (isAttacking || !equippedWeapon) return;
-    
+
+    if(equippedWeapon.is("arrow")) {
+        if (!canShoot) return;
+
+        canShoot = false;
+        wait(FIRE_RATE, () => canShoot = true);
+
+        const mouseWorld = toWorld(mousePos());
+        const direction = mouseWorld.sub(player.pos).unit();
+        
+        const spawnPos = player.pos.add(direction.scale(60)); 
+
+        const arrow = add([
+            sprite("sword"),
+            pos(spawnPos),
+            anchor("center"),
+            rotate(direction.angle() + -30), 
+            scale(0.04), 
+            area(),
+            move(direction, 1000),
+            offscreen({ destroy: true }), 
+            "arrow",
+            z(5)
+        ]);
+
+        arrow.onCollide("tree", () => destroy(arrow));
+        arrow.onCollide("rock", () => destroy(arrow));
+        arrow.onCollide("player", () => destroy(arrow));
+
+        return;
+    }
+
     isAttacking = true;
-    
+
     tween(
-        0, -40, 0.1, 
-        (val) => attackOffset = val, 
+        0, -40, 0.1,
+        (val) => attackOffset = val,
         easings.easeOutQuad
     ).then(() => {
         tween(
-            -40, 0, 0.2, 
-            (val) => attackOffset = val, 
+            -40, 0, 0.2,
+            (val) => attackOffset = val,
             easings.easeInQuad
         ).then(() => {
             isAttacking = false;
@@ -418,13 +505,13 @@ onMousePress(() => {
     })
 });
 
-// ====================
-// == World Generation ==
-// ====================
+// =====================
+// == World Generation =
+// =====================
 
-const WORLD_SEED = 12345; 
-const TOTAL_TREES = 20; 
-const TOTAL_ROCKS = 20; 
+const WORLD_SEED = 12345;
+const TOTAL_TREES = 40;
+const TOTAL_ROCKS = 40;
 const WORLD_OBJECTS = [];
 
 let currentSeed = WORLD_SEED;
@@ -452,7 +539,7 @@ for (let i = 0; i < TOTAL_ROCKS; i++) {
 }
 
 onUpdate(() => {
-    const cam = getCamPos(); 
+    const cam = getCamPos();
     const vpWidth = width() / camScale().x;
     const vpHeight = height() / camScale().x;
     const renderDist = Math.max(vpWidth, vpHeight) / 2 + 200;
@@ -463,9 +550,9 @@ onUpdate(() => {
         if (dist < renderDist && !obj.id) {
             if (obj.type === "tree") {
                 obj.id = add([
-                    circle(20),
+                    circle(40),
                     pos(obj.x, obj.y),
-                    color(20, 100, 20), 
+                    color(20, 100, 20),
                     area(),
                     body({ isStatic: true }),
                     anchor("center"),
@@ -475,7 +562,7 @@ onUpdate(() => {
                 ]);
             } else if (obj.type === "rock") {
                 obj.id = add([
-                    circle(20),
+                    circle(40),
                     pos(obj.x, obj.y),
                     color(120, 120, 120),
                     area(),
@@ -492,3 +579,14 @@ onUpdate(() => {
         }
     });
 });
+
+// CONSTRUCTIONS bar
+add([
+    rect(460, 90),
+    fixed(),
+    pos(440, height() - 110),
+    color(50, 50, 50),
+    outline(2, [255, 255, 255]),
+    z(100),
+    opacity(0.6)
+])
