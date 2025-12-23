@@ -23,6 +23,7 @@ loadSprite("sword", "1.svg")
 loadSprite("axe", "2.svg")
 loadSprite("bow", "3.svg")
 loadSprite("hands", "hands.svg")
+loadSprite("tree", "tree.svg")
 
 /*
 /  SCENARY SETUP
@@ -183,7 +184,8 @@ slots.forEach(slot => {
                 anchor("left"),
                 scale(1),
                 rotate(0),
-                "weapon"
+                "weapon",
+                "sword"
             ]);
         } else if (itemType === "axe") {
             equippedWeapon = player.add([
@@ -192,7 +194,8 @@ slots.forEach(slot => {
                 anchor("left"),
                 scale(1),
                 rotate(0),
-                "weapon"
+                "weapon",
+                "axe"
             ]);
         } else if (itemType === "bow") {
             equippedWeapon = player.add([
@@ -261,11 +264,12 @@ updateLeaderboard();
 let isAttacking = false;
 let canShoot = true;
 const FIRE_RATE = 0.5;
+let isAutoAttacking = false;
 
-onMousePress(() => {
+function performAttack() {
     if (isAttacking || !equippedWeapon) return;
 
-    if (equippedWeapon.is("arrow")) {
+    if (equippedWeapon.is("bow")) {
         if (!canShoot) return;
         canShoot = false;
 
@@ -273,13 +277,13 @@ onMousePress(() => {
 
         const mouseWorld = toWorld(mousePos());
         const direction = mouseWorld.sub(player.pos).unit();
-        const spawnPos = player.pos.add(direction.scale(60));
+        const spawnPos = player.pos.add(direction.scale(80));
 
         const arrow = add([
             sprite("sword"),
             pos(spawnPos),
             anchor("center"),
-            rotate(direction.angle() - 30),
+            rotate(direction.angle() - 0),
             scale(0.04),
             area(),
             move(direction, 1000),
@@ -295,11 +299,63 @@ onMousePress(() => {
     }
 
     isAttacking = true;
+
+    const mouseWorld = toWorld(mousePos());
+    const direction = mouseWorld.sub(player.pos).unit()
+    const hitPos = player.pos.add(direction.scale(50));
+
+    const hitbox = add([
+        circle(40),
+        pos(hitPos),
+        area(),
+        opacity(0),
+        "hit"
+    ]);
+
+    hitbox.onCollide("tree", (t) => {
+        if(equippedWeapon.is("axe")) {
+            getResource("wood");
+        }
+        const originalX = t.pos.x;
+            tween(originalX, originalX + 5, 0.05, (v) => t.pos.x = v)
+                .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => t.pos.x = v))
+                .then(() => tween(originalX - 5, originalX, 0.05, (v) => t.pos.x = v));
+    });
+    hitbox.onCollide("rock", (r) => {
+        if(equippedWeapon.is("axe")) {
+            getResource("stone");
+        }
+        const originalX = r.pos.x;
+            tween(originalX, originalX + 5, 0.05, (v) => r.pos.x = v)
+                .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => r.pos.x = v))
+                .then(() => tween(originalX - 5, originalX, 0.05, (v) => r.pos.x = v));
+    });
+
+    hitbox.onCollide("player", (p) => {
+        if(p !== player && equippedWeapon.is("sword")) {
+            damage(p);
+        } 
+    })
+    wait(0.1, () => destroy(hitbox));
+
     tween(0, -40, 0.1, (val) => attackOffset = val, easings.easeOutQuad)
         .then(() => {
             tween(-40, 0, 0.2, (val) => attackOffset = val, easings.easeInQuad)
                 .then(() => isAttacking = false);
         });
+}
+onMousePress(() => {
+    performAttack();
+})
+
+// SPACE BAR LOCK ATACK
+onKeyPress("space", () => {
+    isAutoAttacking = !isAutoAttacking;
+})
+onUpdate(() => {
+    if (isAutoAttacking) {
+        performAttack();
+    }
 })
 
 // WORLD GENERATION
@@ -333,7 +389,7 @@ onUpdate(() => {
         if (dist < renderDist && !obj.id) {
             if (obj.type === "tree") {
                 obj.id = add([
-                    circle(40),
+                    sprite("tree"),
                     pos(obj.x, obj.y),
                     color(20, 100, 20),
                     area(),
@@ -362,3 +418,24 @@ onUpdate(() => {
         }
     });
 });
+
+// INTERACTION FUNCTIONS
+
+function getResource(type) {
+    add([
+        text(`+1 ${type}`, { size: 24 }),
+        pos(player.pos.x, player.pos.y - 50),
+        color(255, 255, 255),
+        z(20),
+        opacity(1),
+        lifespan(1, { fade: 0.5 }),
+        move(vec2(0, -50), 50)
+    ]);
+}
+
+function damage(target) {
+    console.log("Dano causado!");
+
+    target.color = rgb(255, 0, 0);
+    wait(0.1, () => target.color = rgb(255, 255, 255)); // Volta ao normal (supondo que o original seja branco ou use target.color original)
+}
