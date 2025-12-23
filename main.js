@@ -4,18 +4,29 @@ kaplay({
     background: [255, 255, 255],
     debug: true,
     pixelDensity: Math.min(devicePixelRatio, 2),
-    crisp: false
+    crisp: true,
+    canvas: document.getElementById('game')
 })
 
+// GAME SETTINGS
 const MAP_SIZE = 10000;
 const GRID_SIZE = 50;
 const ZOOM_LEVEL = 0.6;
 
-loadSprite("player", "player.svg");
-loadSprite("sword", "1.svg");
-loadSprite("axe", "2.svg");
-loadSprite("hands", "hands.svg");
-loadSprite("arrow", "3.svg");
+const SPEED = 500
+
+let attackOffset = 0;
+
+// Load Sprites
+loadSprite("player", "player.svg")
+loadSprite("sword", "1.svg")
+loadSprite("axe", "2.svg")
+loadSprite("arrow", "3.svg")
+loadSprite("hands", "hands.svg")
+
+/*
+/  SCENARY SETUP
+*/
 
 add([
     rect(MAP_SIZE, MAP_SIZE),
@@ -25,52 +36,38 @@ add([
     "ground"
 ])
 
-function addBorderWalls() {
-    const thickness = 100;
+const THICKNESS = 0;
+const walls = [
+    { pos: vec2(0, -THICKNESS), size: vec2(MAP_SIZE, THICKNESS) },
+    { pos: vec2(0, MAP_SIZE), size: vec2(MAP_SIZE, THICKNESS) },
+    { pos: vec2(-THICKNESS, 0), size: vec2(THICKNESS, MAP_SIZE) },
+    { pos: vec2(MAP_SIZE, 0), size: vec2(THICKNESS, MAP_SIZE) },
+];
+walls.forEach(w => {
+    add([
+        rect(w.size.x, w.size.y),
+        pos(w.pos),
+        area(),
+        body({ isStatic: true }),
+    ]);
+});
 
-    add([
-        rect(MAP_SIZE, thickness),
-        pos(0, -thickness),
-        area(),
-        body({ isStatic: true }),
-    ]);
-    add([
-        rect(MAP_SIZE, thickness),
-        pos(0, MAP_SIZE),
-        area(),
-        body({ isStatic: true }),
-    ]);
-    add([
-        rect(thickness, MAP_SIZE),
-        pos(-thickness, 0),
-        area(),
-        body({ isStatic: true }),
-    ]);
-    add([
-        rect(thickness, MAP_SIZE),
-        pos(MAP_SIZE, 0),
-        area(),
-        body({ isStatic: true }),
-    ]);
-}
-addBorderWalls();
-
+// Grid Drawing (white lines)
 function drawGrid() {
     return {
         id: "grid",
         draw() {
-            const cam = camPos();
-            const currentZoom = camScale().x;
-
+            const cam = getCamPos();
+            const currentZoom = getCamScale().x;
             const realWidth = width() / currentZoom;
             const realHeight = height() / currentZoom;
 
             const startX = Math.floor((cam.x - realWidth / 2) / GRID_SIZE) * GRID_SIZE;
             const endX = cam.x + realWidth / 2;
-
             const startY = Math.floor((cam.y - realHeight / 2) / GRID_SIZE) * GRID_SIZE;
             const endY = cam.y + realHeight / 2;
 
+            // only lines in the FOV
             for (let x = startX; x < endX; x += GRID_SIZE) {
                 if (x >= 0 && x <= MAP_SIZE) {
                     drawLine({
@@ -96,8 +93,18 @@ function drawGrid() {
         }
     }
 }
-
 add([drawGrid(), z(-90)]);
+document.getElementById("game").focus();
+window.addEventListener("mousedown", () => {
+    // Se não clicou em um botão ou input, foca no jogo
+    if (document.activeElement !== document.getElementById("game")) {
+        document.getElementById("game").focus();
+    }
+});
+
+/*
+/  PLAYER SETUP
+*/
 
 const player = add([
     sprite("player"),
@@ -118,190 +125,56 @@ player.add([
     anchor("left"),
     z(9)
 ])
+
 player.add([
-    sprite('hands'),
+    sprite("hands"),
     pos(-250, -300),
     anchor("right"),
-    scale(1, -1),
     z(9)
 ])
 
-camScale(ZOOM_LEVEL);
+// Camera setup
+setCamScale(ZOOM_LEVEL);
 
-let attackOffset = 0;
-
+// Follow player
 onUpdate(() => {
-    camPos(player.pos);
+    setCamPos(player.pos);
 
     const mouseWorld = toWorld(mousePos());
-    const direction = mouseWorld.sub(player.pos);
+    const direction = mouseWorld.sub(player.pos)
     player.angle = direction.angle() + 90 + attackOffset;
+
+    updateMiniMap()
+
+    updateHealth()
+
 })
 
-const SPEED = 500;
+onKeyDown('w', () => player.move(0, -SPEED));
+onKeyDown('s', () => player.move(0, SPEED));
+onKeyDown('a', () => player.move(-SPEED, 0));
+onKeyDown('d', () => player.move(SPEED, 0));
 
-onKeyDown("w", () => {
-    player.move(0, -SPEED);
-});
-onKeyDown("s", () => {
-    player.move(0, SPEED);
-});
-onKeyDown("a", () => {
-    player.move(-SPEED, 0);
-});
-onKeyDown("d", () => {
-    player.move(SPEED, 0);
-});
-
-const MINI_SIZE = 150;
-const MINI_MARGIN = 20;
-const MINI_SCALE = MINI_SIZE / MAP_SIZE;
-const MINI_X = width() - MINI_SIZE - MINI_MARGIN;
-const MINI_Y = height() - MINI_SIZE - MINI_MARGIN;
-
-const minimapBg = add([
-    rect(MINI_SIZE, MINI_SIZE),
-    pos(MINI_X, MINI_Y),
-    color(0, 0, 0),
-    opacity(0.6),
-    outline(2, [255, 255, 255]),
-    fixed(),
-    z(100)
-]);
-
-const miniPlayer = add([
-    circle(3),
-    color(255, 255, 0),
-    fixed(),
-    z(101),
-    pos(0, 0)
-]);
-
-onUpdate(() => {
-    const miniX = minimapBg.pos.x + (player.pos.x * MINI_SCALE);
-    const miniY = minimapBg.pos.y + (player.pos.y * MINI_SCALE);
-
-    miniPlayer.pos = vec2(miniX, miniY);
-});
-
-const PARTY_SLOT_SIZE = (MINI_SIZE - 15) / 4;
-const PARTY_Y = MINI_Y - PARTY_SLOT_SIZE - 5;
-
-for (let i = 0; i < 4; i++) {
-    add([
-        rect(PARTY_SLOT_SIZE, PARTY_SLOT_SIZE),
-        pos(MINI_X + (i * (PARTY_SLOT_SIZE + 5)), PARTY_Y),
-        color(0, 0, 0),
-        opacity(0.3),
-        outline(2, [255, 255, 255]),
-        fixed(),
-        z(100)
-    ])
-}
-
-function createMapBtn(label, index, colorBg) {
-    const btnWidth = 47;
-    const btnHeight = 47;
-    const gap = 5;
-
-    const startX = MINI_X;
-    const startY = PARTY_Y - btnHeight - 5;
-
-    const btn = add([
-        rect(btnWidth, btnHeight),
-        pos(startX + (index * (btnWidth + gap)), startY),
-        color(colorBg),
-        outline(2, [255, 255, 255]),
-        area(),
-        fixed(),
-        z(100),
-        anchor("topleft"),
-    ]);
-
-    add([
-        text(label, { size: 10, font: "monospace" }),
-        pos(startX + (index * (btnWidth + gap)) + btnWidth / 2, startY + btnHeight / 2),
-        anchor("center"),
-        fixed(),
-        color(255, 255, 255),
-        z(101)
-    ]);
-
-    btn.onHover(() => btn.opacity = 0.8);
-    btn.onHoverEnd(() => btn.opacity = 1);
-}
-
-createMapBtn("LOJA", 0, [210, 180, 0]);
-createMapBtn("TUTOR", 1, [0, 100, 200]);
-createMapBtn("PARTY", 2, [120, 0, 200]);
-
-// ===============
-// == Inventory ==
-// ===============
-
-add([
-    rect(460, 60),
-    fixed(),
-    pos(440, 400),
-    color(80, 80, 80),
-    outline(2, [255, 255, 255]),
-    z(100),
-    opacity(0.6)
-])
+// INVENTORY
 
 let equippedWeapon = null;
 
-for (let i = 0; i < 5; i++) {
-    const slot = add([
-        rect(50, 50),
-        fixed(),
-        pos(450 + i * 90, 400 + 5),
-        color(100, 100, 100),
-        outline(2, [255, 255, 255]),
-        z(101),
-        opacity(0.8),
-        area(),
-        "inventory_slot"
-    ])
+const slots = document.querySelectorAll('.slot');
+slots.forEach(slot => {
+    slot.addEventListener('click', () => {
+        slots.forEach(s => s.style.border = '2px solid white');
+        slot.style.border = '2px solid yellow';
 
-    if (i === 0) {
-        slot.add([
-            sprite("sword"),
-            pos(40, 40),
-            anchor("center"),
-            rotate(-45),
-            scale(0.04),
-            z(102)
-        ])
-    } else if (i === 1) {
-        slot.add([
-            sprite("axe"),
-            pos(40, 40),
-            anchor("center"),
-            scale(0.04),
-            rotate(-45),
-            z(102)
-        ])
-    } else if (i === 2) {
-        slot.add([
-            sprite("arrow"),
-            pos(40, 40),
-            anchor("center"),
-            scale(0.04),
-            rotate(45),
-            z(102)
-        ])
-    }
+        const itemType = slot.getAttribute('data-item');
 
-    slot.onClick(() => {
-        slot.color = rgb(150, 150, 150);
-        wait(0.1, () => slot.color = rgb(100, 100, 100));
         if (equippedWeapon) {
             destroy(equippedWeapon);
             equippedWeapon = null;
         }
 
-        if (i === 0) {
+        if (!itemType) return;
+
+        if (itemType === 'sword') {
             equippedWeapon = player.add([
                 sprite("sword"),
                 pos(-500, -500),
@@ -310,7 +183,7 @@ for (let i = 0; i < 5; i++) {
                 rotate(0),
                 "weapon"
             ]);
-        } else if (i === 1) {
+        } else if (itemType === "axe") {
             equippedWeapon = player.add([
                 sprite("axe"),
                 pos(-500, -500),
@@ -319,7 +192,7 @@ for (let i = 0; i < 5; i++) {
                 rotate(0),
                 "weapon"
             ]);
-        } else if (i === 2) {
+        } else if (itemType === "arrow") {
             equippedWeapon = player.add([
                 sprite("arrow"),
                 pos(-500, -700),
@@ -330,153 +203,85 @@ for (let i = 0; i < 5; i++) {
             ]);
         }
     })
+})
 
-    slot.onHover(() => slot.opacity = 1);
-    slot.onHoverEnd(() => slot.opacity = 0.8);
-}
-
-// ================
-// == Health bar ==
-// ================
-
-let healthvalue = 100;
-let healthBarSize;
-
-if (healthvalue === 100) { healthBarSize = 99 } else { healthBarSize = healthvalue }
-
-add([
-    rect(300, 30),
-    fixed(),
-    pos(20, height() - 50),
-    outline(2, [255, 255, 255]),
-    z(100),
-    opacity(0.8)
-])
-add([
-    rect(3 * healthBarSize, 26),
-    fixed(),
-    pos(22, height() - 48),
-    color(255 - (healthvalue * 2.55), healthvalue * 2.55, 0),
-    z(101)
-])
-add([
-    text(`Health: ${healthvalue}%`),
-    fixed(),
-    scale(0.6),
-    pos(30, height() - 45),
-    color(255, 255, 255),
-    z(101)
-])
-
-// ================
-// == Shield bar ==
-// ================
-
+let healthValue = 100;
 let shieldValue = 100;
-let shieldBarSize;
 
-if (shieldValue === 100) { shieldBarSize = 99 } else { shieldBarSize = shieldValue }
+function updateHealth() {
+    const healthBar = document.getElementById('health-bar-fill');
+    const healthText = document.getElementById('health-text');
+    const shieldBar = document.getElementById('shield-bar-fill');
+    const shieldText = document.getElementById('shield-text');
 
-add([
-    rect(300, 30),
-    fixed(),
-    pos(20, height() - 90),
-    outline(2, [255, 255, 255]),
-    z(100),
-    opacity(0.8)
-])
-add([
-    rect(3 * shieldBarSize, 26),
-    fixed(),
-    pos(22, height() - 88),
-    color(0, 150, 255),
-    z(101)
-])
-add([
-    text(`Shield: ${shieldValue}%`),
-    fixed(),
-    scale(0.6),
-    pos(30, height() - 85),
-    color(255, 255, 255),
-    z(101)
-])
+    healthBar.style.width = `${healthValue}%`;
+    healthBar.style.backgroundColor = `rgb(${255 - (healthValue * 2.55)}, ${healthValue * 2.55}, 0)`;
+    healthText.textContent = `Health: ${healthValue}%`;
 
-// =================
-// == Leaderboard ==
-// =================
-
-add([
-    rect(350, 250),
-    fixed(),
-    pos(width() - 370, 20),
-    color(0, 0, 0),
-    outline(2, [255, 255, 255]),
-    z(100),
-    opacity(0.6)
-])
-add([
-    text("Leaderboard", { size: 24, font: "monospace" }),
-    fixed(),
-    pos(width() - 270, 30),
-    color(255, 255, 255),
-    color(200, 0, 0),
-    z(101)
-])
-
-const leaderbord = {
-    players: [
-        { name: "Player1" },
-        { name: "Player2" },
-        { name: "Player3" },
-        { name: "Player4" },
-        { name: "Player5" },
-        { name: "Player6" },
-        { name: "Player7" },
-        { name: "Player8" },
-        { name: "Player9" },
-        { name: "Player10" }
-    ]
-}
-for (let i = 0; i < 10; i++) {
-    add([
-        text(`${i + 1}. ${leaderbord.players[i].name} - ${Math.floor(Math.random() * 1000)} pts`, { size: 18, font: "monospace" }),
-        fixed(),
-        pos(width() - 350, 60 + i * 18),
-        color(255, 255, 255),
-        z(101)
-    ])
+    shieldBar.style.width = `${shieldValue}%`;
+    shieldText.textContent = `Shield: ${shieldValue}%`;
 }
 
-// ==================
-// == Attack logic ==
-// ==================
+function updateMiniMap() {
+    const miniPlayer = document.getElementById('minimap-player');
+
+    const pX = (player.pos.x / MAP_SIZE) * 100;
+    const pY = (player.pos.y / MAP_SIZE) * 100;
+
+    const clampX = Math.max(0, Math.min(100, pX));
+    const clampY = Math.max(0, Math.min(100, pY));
+
+    miniPlayer.style.left = `${clampX}%`;
+    miniPlayer.style.top = `${clampY}%`;
+}
+
+const leaderboardList = document.getElementById('leaderboard-list');
+const playersData = [
+    { name: 'Alice', score: 1500 },
+    { name: 'Bob', score: 1200 },
+    { name: 'Charlie', score: 900 },
+    { name: 'Diana', score: 800 },
+    { name: 'Eve', score: 600 },
+];
+
+function updateLeaderboard() {
+    leaderboardList.innerHTML = "";
+    playersData.forEach((p, i) => {
+        const li = document.createElement('li');
+        li.innerText = `${i + 1}. ${p.name} - ${p.score} pts`;
+        leaderboardList.appendChild(li);
+    });
+}
+updateLeaderboard();
+
+// ATACK LOGIC
+
 let isAttacking = false;
 let canShoot = true;
-const FIRE_RATE = 0.5; // Tempo de espera entre os tiros em segundos
+const FIRE_RATE = 0.5;
 
 onMousePress(() => {
-    if (isAttacking || !equippedWeapon) return;
+    if (!isAttacking || !equippedWeapon) return;
 
-    if(equippedWeapon.is("arrow")) {
+    if (equippedWeapon.is("arrow")) {
         if (!canShoot) return;
-
         canShoot = false;
-        wait(FIRE_RATE, () => canShoot = true);
+
+        wait(FIRE_RATE, () => camShoot = true);
 
         const mouseWorld = toWorld(mousePos());
         const direction = mouseWorld.sub(player.pos).unit();
-        
-        const spawnPos = player.pos.add(direction.scale(60)); 
+        const spawnPos = player.pos.add(direction.scale(60));
 
         const arrow = add([
             sprite("sword"),
             pos(spawnPos),
             anchor("center"),
-            rotate(direction.angle() + -30), 
-            scale(0.04), 
+            rotate(direction.angle() - 30),
+            scale(0.04),
             area(),
             move(direction, 1000),
-            offscreen({ destroy: true }), 
+            offscreen({ destroy: true }),
             "arrow",
             z(5)
         ]);
@@ -484,31 +289,18 @@ onMousePress(() => {
         arrow.onCollide("tree", () => destroy(arrow));
         arrow.onCollide("rock", () => destroy(arrow));
         arrow.onCollide("player", () => destroy(arrow));
-
         return;
     }
 
     isAttacking = true;
+    tween(0, -40, 0.1, (val) => attackOffset = val, easings.easeOutQuad)
+        .then(() => {
+            tween(-40, 0, 0.2, (val) => attackOffset = val, easings.easeInQuad)
+                .then(() => isAttacking = false);
+        });
+})
 
-    tween(
-        0, -40, 0.1,
-        (val) => attackOffset = val,
-        easings.easeOutQuad
-    ).then(() => {
-        tween(
-            -40, 0, 0.2,
-            (val) => attackOffset = val,
-            easings.easeInQuad
-        ).then(() => {
-            isAttacking = false;
-        })
-    })
-});
-
-// =====================
-// == World Generation =
-// =====================
-
+// WORLD GENERATION
 const WORLD_SEED = 12345;
 const TOTAL_TREES = 40;
 const TOTAL_ROCKS = 40;
@@ -521,27 +313,16 @@ function seededRandom() {
 }
 
 for (let i = 0; i < TOTAL_TREES; i++) {
-    WORLD_OBJECTS.push({
-        x: seededRandom() * MAP_SIZE,
-        y: seededRandom() * MAP_SIZE,
-        type: "tree",
-        id: null
-    });
+    WORLD_OBJECTS.push({ x: seededRandom() * MAP_SIZE, y: seededRandom() * MAP_SIZE, type: "tree", id: null });
 }
-
 for (let i = 0; i < TOTAL_ROCKS; i++) {
-    WORLD_OBJECTS.push({
-        x: seededRandom() * MAP_SIZE,
-        y: seededRandom() * MAP_SIZE,
-        type: "rock",
-        id: null
-    });
+    WORLD_OBJECTS.push({ x: seededRandom() * MAP_SIZE, y: seededRandom() * MAP_SIZE, type: "rock", id: null });
 }
 
 onUpdate(() => {
     const cam = getCamPos();
-    const vpWidth = width() / camScale().x;
-    const vpHeight = height() / camScale().x;
+    const vpWidth = width() / getCamScale().x;
+    const vpHeight = height() / getCamScale().x;
     const renderDist = Math.max(vpWidth, vpHeight) / 2 + 200;
 
     WORLD_OBJECTS.forEach(obj => {
@@ -579,14 +360,3 @@ onUpdate(() => {
         }
     });
 });
-
-// CONSTRUCTIONS bar
-add([
-    rect(460, 90),
-    fixed(),
-    pos(440, height() - 110),
-    color(50, 50, 50),
-    outline(2, [255, 255, 255]),
-    z(100),
-    opacity(0.6)
-])
