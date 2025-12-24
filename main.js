@@ -24,6 +24,8 @@ loadSprite("axe", "2.svg")
 loadSprite("bow", "3.svg")
 loadSprite("hands", "hands.svg")
 loadSprite("tree", "tree.svg")
+loadSprite("stone", "stone.svg")
+loadSprite("wall", "brick.svg");
 
 /*
 /  SCENARY SETUP
@@ -163,6 +165,10 @@ let equippedWeapon = null;
 const slots = document.querySelectorAll('.slot');
 slots.forEach(slot => {
     slot.addEventListener('click', () => {
+
+        currentBuilding = null;
+
+
         slots.forEach(s => s.style.border = '2px solid white');
         slot.style.border = '2px solid yellow';
 
@@ -259,6 +265,82 @@ function updateLeaderboard() {
 }
 updateLeaderboard();
 
+let placementGhost = null;
+
+onUpdate(() => {
+    if (currentBuilding) {
+        const mouseWorld = toWorld(mousePos());
+
+        const snapX = Math.round(mouseWorld.x / GRID_SIZE) * GRID_SIZE - 25;
+        const snapY = Math.round(mouseWorld.y / GRID_SIZE) * GRID_SIZE - 25;
+
+        if (!placementGhost) {
+            const structure = BUILDING_TYPES[currentBuilding];
+            placementGhost = add([
+                sprite(structure.sprite),
+                pos(snapX, snapY),
+                opacity(0.5), 
+                scale(0.05),  
+                anchor("center"),
+                z(50),        
+                "ghost"
+            ]);
+        } else {
+            placementGhost.pos = vec2(snapX, snapY);
+            
+            placementGhost.use(sprite(BUILDING_TYPES[currentBuilding].sprite));
+        }
+    } else {
+        if (placementGhost) {
+            destroy(placementGhost);
+            placementGhost = null;
+        }
+    }
+});
+
+
+const BUILDING_TYPES = {
+    "wall": {
+        sprite: "wall",
+        areaShape: new Rect(vec2(1), 100, 20)
+    },
+    "gold-mine": {
+        sprite: "wall", 
+        areaShape: new Rect(vec2(2), 50, 50)
+    }
+};
+
+let currentBuilding = null; 
+
+function buildStructure(type, position) {
+    const structure = BUILDING_TYPES[type];
+    if (!structure) return;
+
+    add([
+        sprite(structure.sprite), 
+        pos(position),
+        area({ shape: structure.areaShape }),
+        body({ isStatic: true }),
+        anchor("center"),
+        scale(0.05),
+        z(-5),
+        type, 
+        "structure" 
+    ]);
+}
+
+onKeyPress("b", () => {
+    if (currentBuilding) {
+        currentBuilding = null;
+        console.log("Modo: ARMAS");
+    } else {
+        currentBuilding = "wall";
+        equippedWeapon = null;
+        if(equippedWeapon) destroy(equippedWeapon);
+        console.log("Modo: CONSTRUÇÃO");
+    }
+});
+
 // ATACK LOGIC
 
 let isAttacking = false;
@@ -267,6 +349,18 @@ const FIRE_RATE = 0.5;
 let isAutoAttacking = false;
 
 function performAttack() {
+
+    if (currentBuilding) {
+        const mouseWorld = toWorld(mousePos());
+
+        const snapX = Math.round(mouseWorld.x / GRID_SIZE) * GRID_SIZE -25;
+        const snapY = Math.round(mouseWorld.y / GRID_SIZE) * GRID_SIZE -25;
+        
+        buildStructure(currentBuilding, vec2(snapX, snapY));
+        return; 
+    }
+
+
     if (isAttacking || !equippedWeapon) return;
 
     if (equippedWeapon.is("bow")) {
@@ -352,6 +446,7 @@ onMousePress(() => {
 onKeyPress("space", () => {
     isAutoAttacking = !isAutoAttacking;
 })
+
 onUpdate(() => {
     if (isAutoAttacking) {
         performAttack();
@@ -392,22 +487,22 @@ onUpdate(() => {
                     sprite("tree"),
                     pos(obj.x, obj.y),
                     color(20, 100, 20),
-                    area(),
+                    area({ shape: new Circle(vec2(0), 1000) }),
                     body({ isStatic: true }),
                     anchor("center"),
-                    scale(3),
+                    scale(0.1),
                     z(-10),
                     "tree"
                 ]);
             } else if (obj.type === "rock") {
                 obj.id = add([
-                    circle(40),
+                    sprite("stone"),
                     pos(obj.x, obj.y),
                     color(120, 120, 120),
-                    area(),
+                    area({ shape: new Circle(vec2(0), 1200) }),
                     body({ isStatic: true }),
                     anchor("center"),
-                    scale(3),
+                    scale(0.09),
                     z(-10),
                     "rock"
                 ]);
@@ -439,3 +534,5 @@ function damage(target) {
     target.color = rgb(255, 0, 0);
     wait(0.1, () => target.color = rgb(255, 255, 255)); // Volta ao normal (supondo que o original seja branco ou use target.color original)
 }
+
+
