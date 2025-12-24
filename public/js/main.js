@@ -12,7 +12,23 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'F1') {
         e.preventDefault();
     }else if (e.key === 'Escape') {
-        
+        if (currentBuilding) {
+            currentBuilding = null;
+            
+            document.querySelectorAll('.construction-action').forEach(s => {
+                s.style.border = '2px solid white';
+            });
+            
+            return
+        }
+        if (equippedWeapon) {
+            destroy(equippedWeapon); 
+            equippedWeapon = null;   
+
+            document.querySelectorAll('.inventory .slot').forEach(s => {
+                s.style.border = '2px solid white';
+            });
+        }
     }
 });
 
@@ -46,7 +62,7 @@ export const player = add([
     color(255, 255, 0),
     anchor("center"),
     rotate(0),
-    area({ shape: new Circle(vec2(0), 455) }),
+    area({ shape: new Circle(vec2(0), 455), collisionIgnore: ["door", "structure"] }),
     body(),
     "player",
     z(10)
@@ -199,13 +215,17 @@ onUpdate(() => {
                     }
                 } 
                 else {
-                    if ((currentBuilding === "wall" && obj.is("wall")) || (currentBuilding === "door" && obj.is("door"))) {
+                    const isStructureA = currentBuilding === "wall" || currentBuilding === "door";
+                    const isStructureB = obj.is("wall") || obj.is("door");
+
+                    if (isStructureA && isStructureB) {
                         if (testPos.dist(obj.pos) < 40) {
                             isFree = false;
                             break;
                         }
                     } 
                     else {
+                        
                         let objConf = { width: 50, height: 50 }; 
                         if (obj.is("wall")) objConf = BUILDING_TYPES["wall"];
                         else if (obj.is("gold-mine")) objConf = BUILDING_TYPES["gold-mine"];
@@ -220,7 +240,7 @@ onUpdate(() => {
                             isFree = false;
                             break;
                         }
-                    }
+                    }                    
                 }
             }
 
@@ -253,16 +273,24 @@ function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
     if (!structure) return;
 
+    const areaConfig = { shape: structure.areaShape };
+    let opacityValue = 1
+
+    if (type === "door") {
+       areaConfig.collisionIgnore = ["player"];
+       opacityValue = 0.5;
+    }
+
     add([
         sprite(structure.sprite),
+        opacity(opacityValue),
         pos(position),
-        area({ shape: structure.areaShape }),
+        area(areaConfig),
         body({ isStatic: true }),
         anchor("center"),
         scale(structure.scale),
         z(0),
         type,
-        "structure",
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
 }
@@ -310,12 +338,18 @@ let isAutoAttacking = false;
 
 function performAttack() {
     if (currentBuilding) {
+        const config = BUILDING_TYPES[currentBuilding];
+        const maxLimit = config.max || Infinity;
+
+        const currentCount = get(currentBuilding).length;
+
+        if (currentCount >= maxLimit) {
+            // TODO
+            return
+        }
         if (placementGhost && canBuildHere) {
             buildStructure(currentBuilding, placementGhost.pos);
-        } else {
-            console.log("Local inválido para construção!");
-        }
-        return;
+        } 
     }
 
     if (isAttacking || !equippedWeapon) return;

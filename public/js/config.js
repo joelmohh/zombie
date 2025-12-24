@@ -11,7 +11,9 @@ export const BUILDING_TYPES = {
         height: 20,
         offset: { x: -50, y: -10 }, 
         hitboxSize: { w: 100, h: 20 },
-        scale: 0.05
+        scale: 0.05,
+        health: 200,
+        max: 100
     },
     "gold-mine": {
         sprite: "gold-mine", 
@@ -19,7 +21,9 @@ export const BUILDING_TYPES = {
         height: 150, 
         offset: { x: -75, y: -75 },
         hitboxSize: { w: 150, h: 150 },
-        scale: 0.05
+        scale: 0.05,
+        health: 500,
+        max: 1
     },
     "tower": {
         sprite: "wall", 
@@ -27,7 +31,10 @@ export const BUILDING_TYPES = {
         height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
-        scale: 0.15
+        scale: 0.15,
+        health: 300,
+        attackRange: 300,
+        max: 5,
     },
     "door": {
         sprite: "door",
@@ -35,7 +42,9 @@ export const BUILDING_TYPES = {
         height: 20,
         offset: { x: -50, y: -10 }, 
         hitboxSize: { w: 100, h: 20 },
-        scale: 0.05
+        scale: 0.05,
+        health: 100,
+        max: 20
     }
 };
 export const BUTTON_MAPPING = {
