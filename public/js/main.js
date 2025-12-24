@@ -11,6 +11,8 @@ kaplay({
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F1') {
         e.preventDefault();
+    }else if (e.key === 'Escape') {
+        
     }
 });
 
@@ -23,62 +25,6 @@ updateLeaderboard();
 
 let attackOffset = 0;
 
-/*
-/  MAP SETUP
-*/
-
-add([
-    rect(MAP_SIZE, MAP_SIZE),
-    pos(0, 0),
-    color(34, 139, 34),
-    z(-100),
-    "ground"
-])
-
-const walls = [
-    { pos: vec2(0, -THICKNESS), size: vec2(MAP_SIZE, THICKNESS) },
-    { pos: vec2(0, MAP_SIZE), size: vec2(MAP_SIZE, THICKNESS) },
-    { pos: vec2(-THICKNESS, 0), size: vec2(THICKNESS, MAP_SIZE) },
-    { pos: vec2(MAP_SIZE, 0), size: vec2(THICKNESS, MAP_SIZE) },
-];
-walls.forEach(w => {
-    add([
-        rect(w.size.x, w.size.y),
-        pos(w.pos),
-        area(),
-        body({ isStatic: true }),
-    ]);
-});
-
-// Grid Drawing
-function drawGrid() {
-    return {
-        id: "grid",
-        draw() {
-            const cam = getCamPos();
-            const currentZoom = getCamScale().x;
-            const realWidth = width() / currentZoom;
-            const realHeight = height() / currentZoom;
-
-            const startX = Math.floor((cam.x - realWidth / 2) / GRID_SIZE) * GRID_SIZE;
-            const endX = cam.x + realWidth / 2;
-            const startY = Math.floor((cam.y - realHeight / 2) / GRID_SIZE) * GRID_SIZE;
-            const endY = cam.y + realHeight / 2;
-
-            for (let x = startX; x < endX; x += GRID_SIZE) {
-                if (x >= 0 && x <= MAP_SIZE) {
-                    drawLine({ p1: vec2(x, Math.max(0, cam.y - realHeight / 2)), p2: vec2(x, Math.min(MAP_SIZE, cam.y + realHeight / 2)), color: rgb(0, 0, 0), opacity: 0.1, width: 2 });
-                }
-            }
-            for (let y = startY; y < endY; y += GRID_SIZE) {
-                if (y >= 0 && y <= MAP_SIZE) {
-                    drawLine({ p1: vec2(Math.max(0, cam.x - realWidth / 2), y), p2: vec2(Math.min(MAP_SIZE, cam.x + realWidth / 2), y), color: rgb(0, 0, 0), opacity: 0.1, width: 2 });
-                }
-            }
-        }
-    }
-}
-add([drawGrid(), z(-90)]);
 
 // Focus on canvas
 
@@ -93,7 +39,7 @@ window.addEventListener("mousedown", (e) => {
 /  PLAYER SETUP
 */
 
-const player = add([
+export const player = add([
     sprite("player"),
     scale(0.1),
     pos(center()),
@@ -197,51 +143,102 @@ let currentBuilding = null;
 let placementGhost = null;
 let canBuildHere = false;
 
-// Ghost Logic & Auto Attack Loop
+// Ghost Logic
 onUpdate(() => {
     if (currentBuilding) {
         const conf = BUILDING_TYPES[currentBuilding];
         const mouseWorld = toWorld(mousePos());
-
-        let snapX, snapY;
-        snapX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-        snapY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-
-        const ghostShape = new Rect(vec2(-conf.width / 2, -conf.height / 2), conf.width, conf.height);
-
+        let idealX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+        let idealY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+        
         if (!placementGhost) {
             placementGhost = add([
                 sprite(conf.sprite),
-                pos(snapX, snapY),
+                pos(idealX, idealY),
                 opacity(0.5),
                 anchor("center"),
                 scale(conf.scale),
-                area({ shape: ghostShape }),
-                z(50),
+                area({ shape: conf.areaShape }), 
+                z(50), 
                 "ghost"
             ]);
         } else {
-            placementGhost.pos = vec2(snapX, snapY);
             placementGhost.use(sprite(conf.sprite));
             placementGhost.use(scale(conf.scale));
-            placementGhost.use(area({ shape: ghostShape }));
+            placementGhost.use(area({ shape: conf.areaShape }));
         }
 
-        canBuildHere = true;
-        const obstacles = ["tree", "rock", "structure", "wall", "player"];
-        
-        for (const tag of obstacles) {
-            get(tag).forEach(obj => {
-                if (placementGhost.isColliding(obj)) {
-                    canBuildHere = false;
+        const offsets = [
+            vec2(0, 0),
+            vec2(GRID_SIZE, 0), vec2(-GRID_SIZE, 0), vec2(0, GRID_SIZE), vec2(0, -GRID_SIZE),
+            vec2(GRID_SIZE, GRID_SIZE), vec2(GRID_SIZE, -GRID_SIZE), vec2(-GRID_SIZE, GRID_SIZE), vec2(-GRID_SIZE, -GRID_SIZE)
+        ];
+
+        let finalPos = vec2(idealX, idealY);
+        let foundSafeSpot = false;
+
+        const allObstacles = [
+            ...get("tree"), ...get("rock"), ...get("player"), 
+            ...get("wall"), ...get("gold-mine"), ...get("tower"), ...get("door")
+        ];
+
+        for (const offset of offsets) {
+            const testPos = vec2(idealX + offset.x, idealY + offset.y);
+            let isFree = true;
+
+            for (const obj of allObstacles) {
+                if (obj.is("tree") || obj.is("rock") || obj.is("player")) {
+                    const ghostRadius = (conf.width * conf.scale) / 2;
+                    const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius) 
+                                      ? obj.area.shape.radius * obj.scale.x 
+                                      : 40; 
+
+                    if (testPos.dist(obj.pos) < (objRadius + ghostRadius)) {
+                        isFree = false;
+                        break;
+                    }
+                } 
+                else {
+                    if ((currentBuilding === "wall" && obj.is("wall")) || (currentBuilding === "door" && obj.is("door"))) {
+                        if (testPos.dist(obj.pos) < 40) {
+                            isFree = false;
+                            break;
+                        }
+                    } 
+                    else {
+                        let objConf = { width: 50, height: 50 }; 
+                        if (obj.is("wall")) objConf = BUILDING_TYPES["wall"];
+                        else if (obj.is("gold-mine")) objConf = BUILDING_TYPES["gold-mine"];
+                        else if (obj.is("tower")) objConf = BUILDING_TYPES["tower"];
+                        else if (obj.is("door")) objConf = BUILDING_TYPES["door"];
+
+                        const overlapX = (conf.width + objConf.width) / 2;
+                        const overlapY = (conf.height + objConf.height) / 2;
+
+                        if (Math.abs(testPos.x - obj.pos.x) < overlapX && 
+                            Math.abs(testPos.y - obj.pos.y) < overlapY) {
+                            isFree = false;
+                            break;
+                        }
+                    }
                 }
-            });
+            }
+
+            if (isFree) {
+                finalPos = testPos;
+                foundSafeSpot = true;
+                break; 
+            }
         }
 
-        if (!canBuildHere) {
-            placementGhost.color = rgb(255, 100, 100); 
+        placementGhost.pos = finalPos; 
+        canBuildHere = foundSafeSpot;
+
+        if (foundSafeSpot) {
+            placementGhost.color = rgb(255, 255, 255);
         } else {
-            placementGhost.color = rgb(255, 255, 255); 
+            placementGhost.pos = vec2(idealX, idealY);
+            placementGhost.color = rgb(255, 100, 100);
         }
 
     } else {
@@ -251,7 +248,6 @@ onUpdate(() => {
         }
     }
 });
-
 // Building Logic
 function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
@@ -264,7 +260,7 @@ function buildStructure(type, position) {
         body({ isStatic: true }),
         anchor("center"),
         scale(structure.scale),
-        z(-5),
+        z(0),
         type,
         "structure",
         offscreen({ hide: true, pause: true, distance: 300 })
@@ -398,84 +394,3 @@ onKeyPress("space", () => {
     isAutoAttacking = !isAutoAttacking;
 });
 
-// WORLD GENERATION
-const WORLD_SEED = 12345;
-const TOTAL_TREES = 40;
-const TOTAL_ROCKS = 40;
-const WORLD_OBJECTS = [];
-
-let currentSeed = WORLD_SEED;
-function seededRandom() {
-    currentSeed = (currentSeed * 9301 + 49297) % 233280;
-    return currentSeed / 233280;
-}
-
-for (let i = 0; i < TOTAL_TREES; i++) {
-    WORLD_OBJECTS.push({ x: seededRandom() * MAP_SIZE, y: seededRandom() * MAP_SIZE, type: "tree", id: null });
-}
-for (let i = 0; i < TOTAL_ROCKS; i++) {
-    WORLD_OBJECTS.push({ x: seededRandom() * MAP_SIZE, y: seededRandom() * MAP_SIZE, type: "rock", id: null });
-}
-
-// Interaction Functions
-function getResource(type) {
-    add([
-        text(`+1 ${type}`, { size: 24 }),
-        pos(player.pos.x, player.pos.y - 50),
-        color(255, 255, 255),
-        z(100),
-        opacity(1),
-        lifespan(1, { fade: 0.5 }),
-        move(vec2(0, -50), 50)
-    ]);
-}
-
-function damage(target) {
-    target.color = rgb(255, 0, 0);
-    wait(0.1, () => target.color = rgb(255, 255, 255));
-}
-
-// World Rendering Update
-onUpdate(() => {
-    const cam = getCamPos();
-    const vpWidth = width() / getCamScale().x;
-    const vpHeight = height() / getCamScale().x;
-    const renderDist = Math.max(vpWidth, vpHeight) / 2 + 200;
-
-    WORLD_OBJECTS.forEach(obj => {
-        const objPos = vec2(obj.x, obj.y);
-        const dist = objPos.dist(player.pos);
-
-        // Safe Zone Check
-        if (objPos.dist(center()) < 300) return;
-
-        if (dist < renderDist && !obj.id) {
-            if (obj.type === "tree") {
-                obj.id = add([
-                    sprite("tree"),
-                    pos(obj.x, obj.y),
-                    area({ shape: new Circle(vec2(0), 1000) }),
-                    body({ isStatic: true }),
-                    anchor("center"),
-                    scale(0.1),
-                    z(-10),
-                    "tree"
-                ]);
-            } else if (obj.type === "rock") {
-                obj.id = add([
-                    sprite("stone"),
-                    pos(obj.x, obj.y),
-                    area({ shape: new Circle(vec2(0), 1200) }),
-                    body({ isStatic: true }),
-                    anchor("center"),
-                    scale(0.09),
-                    z(-10),
-                    "rock"
-                ]);
-            }
-        } else if (dist >= renderDist && obj.id) {
-            destroy(obj.id);
-            obj.id = null;
-        }
-    });
-});

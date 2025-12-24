@@ -10,14 +10,22 @@ function loadSafeSprite(name, url) {
 }
 
 export function loadAllSprites() {
+    // Player and Hands
     loadSafeSprite("player", "/public/assets/player.svg");
+    loadSafeSprite("hands", "/public/assets/hands.svg");
+
+    // Weapons
     loadSafeSprite("sword", "/public/assets/1.svg");
     loadSafeSprite("axe", "/public/assets/2.svg");
     loadSafeSprite("bow", "/public/assets/3.svg");
-    loadSafeSprite("hands", "/public/assets/hands.svg");
+
+    // Resources
     loadSafeSprite("tree", "/public/assets/tree.svg");
     loadSafeSprite("stone", "/public/assets/stone.svg");
+    
+    // Buildings
     loadSafeSprite("wall", "/public/assets/brick.png");
     loadSafeSprite("tower", "/public/assets/brick.png");
-    loadSafeSprite("cursor", "./public/assets/cursor.png");
+    loadSafeSprite("gold-mine", "/public/assets/gold-mine.svg");
+    loadSafeSprite('door', '/public/assets/door.svg');
 }
