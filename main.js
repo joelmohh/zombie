@@ -2,13 +2,17 @@ import kaplay from 'https://unpkg.com/kaplay@4000.0.0-alpha.24/dist/kaplay.mjs';
 
 kaplay({
     background: [255, 255, 255],
-    debug: true,
+    debug: false,
     pixelDensity: Math.min(devicePixelRatio, 2),
     crisp: true,
     canvas: document.getElementById('game'),
     touchToMouse: true
 })
-
+window.addEventListener("keydown", (e) => {
+    if (e.key === "F1") {
+        e.preventDefault();
+    }
+});
 // GAME SETTINGS
 const MAP_SIZE = 10000;
 const GRID_SIZE = 50;
@@ -18,14 +22,24 @@ const SPEED = 500;
 let attackOffset = 0;
 
 // Load Sprites
-loadSprite("player", "player.svg")
-loadSprite("sword", "1.svg")
-loadSprite("axe", "2.svg")
-loadSprite("bow", "3.svg")
-loadSprite("hands", "hands.svg")
-loadSprite("tree", "tree.svg")
-loadSprite("stone", "stone.svg")
-loadSprite("wall", "brick.svg");
+function loadSafeSprite(name, url) {
+    loadSprite(name, url, {
+        sliceX: 1,
+        sliceY: 1,
+        anims: {
+            idle: { from: 0, to: 0 }
+        }
+    });
+}
+
+loadSafeSprite("player", "player.svg");
+loadSafeSprite("sword", "1.svg");
+loadSafeSprite("axe", "2.svg");
+loadSafeSprite("bow", "3.svg");
+loadSafeSprite("hands", "hands.svg");
+loadSafeSprite("tree", "tree.svg");
+loadSafeSprite("stone", "stone.svg");
+loadSafeSprite("wall", "brick.svg");
 
 /*
 /  SCENARY SETUP
@@ -116,18 +130,28 @@ setCamScale(ZOOM_LEVEL);
 
 // UPDATE LOOP
 onUpdate(() => {
-    setCamPos(player.pos);
+    const currentCam = getCamPos();
+    if (currentCam.dist(player.pos) > 1) {
+        setCamPos(player.pos);
+    }
+
     const mouseWorld = toWorld(mousePos());
     const direction = mouseWorld.sub(player.pos)
     player.angle = direction.angle() + 90 + attackOffset;
 
     updateMiniMap()
-    updateHealth()
+    //updateHealth()
 
     if (player.pos.x < 0) player.pos.x = 0;
     if (player.pos.y < 0) player.pos.y = 0;
     if (player.pos.x > MAP_SIZE) player.pos.x = MAP_SIZE;
     if (player.pos.y > MAP_SIZE) player.pos.y = MAP_SIZE;
+
+    if (isAutoAttacking) {
+        if (!isAttacking && equippedWeapon) {
+            performAttack();
+        }
+    }
 })
 
 onKeyDown('w', () => player.move(0, -SPEED));
@@ -192,14 +216,14 @@ const BUILDING_TYPES = {
         width: 100,
         height: 20,
         scale: 0.05,
-        areaShape: new Rect(vec2(0), 100, 20)
+        areaShape: new Rect(vec2(0, 0), 1040, 1040)
     },
     "gold-mine": {
-        sprite: "wall", 
-        width: GRID_SIZE * 3, 
-        height: GRID_SIZE * 3, 
-        scale: 0.2, 
-        areaShape: new Rect(vec2(-(GRID_SIZE * 3) / 2, -(GRID_SIZE * 3) / 2), GRID_SIZE * 3, GRID_SIZE * 3)
+        sprite: "wall",
+        width: GRID_SIZE * 3,
+        height: GRID_SIZE * 3,
+        scale: 0.25,
+        areaShape: new Rect(vec2(0, 0), 1000, 1000)
     }
 };
 
@@ -242,10 +266,6 @@ onUpdate(() => {
             placementGhost = null;
         }
     }
-
-    if (isAutoAttacking) {
-        performAttack();
-    }
 });
 
 // Leaderboard
@@ -282,7 +302,8 @@ function buildStructure(type, position) {
         z(-5),
         type,
         "structure",
-        "wall"
+        "wall",
+        offscreen({ hide: true, pause: true, distance: 300 })
     ]);
 }
 
@@ -318,21 +339,10 @@ const FIRE_RATE = 0.5;
 let isAutoAttacking = false;
 
 function performAttack() {
-    // Modo Construção
     if (currentBuilding) {
-        const conf = BUILDING_TYPES[currentBuilding];
-        const mouseWorld = toWorld(mousePos());
-
-        let snapX, snapY;
-        if (currentBuilding === "gold-mine") {
-            snapX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-            snapY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-        } else {
-            snapX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (conf.width / 2 / 2);
-            snapY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+        if (placementGhost) {
+            buildStructure(currentBuilding, placementGhost.pos);
         }
-
-        buildStructure(currentBuilding, vec2(snapX, snapY));
         return;
     }
 
@@ -364,7 +374,6 @@ function performAttack() {
         arrow.onCollide("tree", () => destroy(arrow));
         arrow.onCollide("rock", () => destroy(arrow));
         arrow.onCollide("wall", () => destroy(arrow));
-        // Removido colisão player
         return;
     }
 
@@ -377,18 +386,22 @@ function performAttack() {
     const hitbox = add([circle(40), pos(hitPos), area(), opacity(0), "hit"]);
 
     hitbox.onCollide("tree", (t) => {
-        if (equippedWeapon.is("axe")) getResource("wood");
-        const originalX = t.pos.x;
-        tween(originalX, originalX + 5, 0.05, (v) => t.pos.x = v)
-            .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => t.pos.x = v))
-            .then(() => tween(originalX - 5, originalX, 0.05, (v) => t.pos.x = v));
+        if (equippedWeapon.is("axe")) {
+            getResource("wood");
+            const originalX = t.pos.x;
+            tween(originalX, originalX + 5, 0.05, (v) => t.pos.x = v)
+                .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => t.pos.x = v))
+                .then(() => tween(originalX - 5, originalX, 0.05, (v) => t.pos.x = v));
+        }
     });
     hitbox.onCollide("rock", (r) => {
-        if (equippedWeapon.is("axe")) getResource("stone");
-        const originalX = r.pos.x;
-        tween(originalX, originalX + 5, 0.05, (v) => r.pos.x = v)
-            .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => r.pos.x = v))
-            .then(() => tween(originalX - 5, originalX, 0.05, (v) => r.pos.x = v));
+        if (equippedWeapon.is("axe")) {
+            getResource("stone");
+            const originalX = r.pos.x;
+            tween(originalX, originalX + 5, 0.05, (v) => r.pos.x = v)
+                .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => r.pos.x = v))
+                .then(() => tween(originalX - 5, originalX, 0.05, (v) => r.pos.x = v));
+        }
     });
     hitbox.onCollide("player", (p) => {
         if (p !== player && equippedWeapon.is("sword")) damage(p);
@@ -396,9 +409,11 @@ function performAttack() {
 
     wait(0.1, () => destroy(hitbox));
 
-    tween(0, -40, 0.1, (val) => attackOffset = val, easings.easeOutQuad)
-        .then(() => tween(-40, 0, 0.2, (val) => attackOffset = val, easings.easeInQuad))
-        .then(() => isAttacking = false);
+    tween(0, -50, 0.15, (val) => attackOffset = val, easings.easeOutBack)
+        .then(() => tween(-50, 0, 0.25, (val) => attackOffset = val, easings.easeInOutSine))
+        .then(() => {
+            wait(0.3, () => isAttacking = false);
+        });
 }
 
 onMousePress(() => performAttack());
