@@ -35,9 +35,25 @@ document.addEventListener('keydown', (e) => {
 import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, THICKNESS, BUILDING_TYPES } from './config.js';
 import { loadAllSprites } from './assets.js';
 import { updateLeaderboard } from './leaderboard.js';
+import { initDefense } from './defense.js';
+import { initEnemySystem, spawnZombie } from './enemy.js';
 
 loadAllSprites()
 updateLeaderboard();
+initDefense();
+initEnemySystem();
+
+document.addEventListener('DOMContentLoaded', () => {
+    // mouse click to spawn zombie for testing REMOVE LATER
+    document.getElementById("game").addEventListener('click', () => {
+        const randomOffset = vec2(rand(-300, 300), rand(-300, 300));
+        const spawnPos = player.pos.add(randomOffset);
+        
+        spawnZombie(spawnPos);
+        
+        document.getElementById("game").focus();
+    });
+})
 
 let attackOffset = 0;
 
@@ -427,4 +443,6 @@ onMousePress(() => performAttack());
 onKeyPress("space", () => {
     isAutoAttacking = !isAutoAttacking;
 });
+
+
 

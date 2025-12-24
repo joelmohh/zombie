@@ -25,31 +25,75 @@ export const BUILDING_TYPES = {
         health: 500,
         max: 1
     },
-    "tower": {
-        sprite: "wall", 
-        width: 100, 
-        height: 100,
-        offset: { x: -50, y: -50 },
-        hitboxSize: { w: 100, h: 100 },
-        scale: 0.15,
-        health: 300,
-        attackRange: 300,
-        max: 5,
-    },
-    "door": {
+    "door":{
         sprite: "door",
         width: 100, 
         height: 20,
         offset: { x: -50, y: -10 }, 
         hitboxSize: { w: 100, h: 20 },
         scale: 0.05,
-        health: 100,
-        max: 20
+        health: 200,
+        max: 100
+    },
+    "tower_archer": {
+        sprite: "wall", 
+        width: 100, height: 100,
+        offset: { x: -50, y: -50 },
+        hitboxSize: { w: 100, h: 100 },
+        scale: 0.15,
+        health: 200,
+        range: 400,          
+        fireRate: 0.8,       
+        damage: 50,
+        type: "single",      
+        bulletSprite: "sword" 
+    },
+    "tower_cannon": {
+        sprite: "wall",
+        width: 100, height: 100,
+        offset: { x: -50, y: -50 },
+        hitboxSize: { w: 100, h: 100 },
+        scale: 0.15,
+        health: 400,
+        range: 350,
+        fireRate: 2.0,       
+        damage: 50,
+        type: "explosive",   
+        bulletSprite: "stone" 
+    },
+    "tower_bomber": {
+        sprite: "wall",
+        width: 100, height: 100,
+        offset: { x: -50, y: -50 },
+        hitboxSize: { w: 100, h: 100 },
+        scale: 0.15,
+        health: 300,
+        range: 500,          
+        fireRate: 3.0,       
+        damage: 100,
+        type: "bomb",        
+        bulletSprite: "stone"
+    },
+    "tower_magic": {
+        sprite: "wall",
+        width: 100, height: 100,
+        offset: { x: -50, y: -50 },
+        hitboxSize: { w: 100, h: 100 },
+        scale: 0.15,
+        health: 250,
+        range: 250,          
+        fireRate: 1.5,
+        damage: 10,          
+        type: "shotgun",     
+        bulletSprite: "sword" 
     }
 };
+
 export const BUTTON_MAPPING = {
-    1: "wall",       
-    2: "gold-mine",  
-    3: "tower",      
-    4: "door"
+    1: "wall",
+    2: "gold-mine",
+    3: "tower_archer",
+    4: "tower_cannon",
+    5: "tower_magic", 
+    6: "tower_bomber" 
 };
