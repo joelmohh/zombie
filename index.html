@@ -4,7 +4,7 @@
         <title>Zombs with out the IO - Survive</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="public/css/style.css">
     </head>
     <body>
         
@@ -29,24 +29,33 @@
             <div class="bottom-center">
 
                 <div class="inventory">
-                    <div class="slot" data-index="0" data-item="sword"><img src="1.svg" class="icon"></div>
-                    <div class="slot" data-index="1" data-item="axe"><img src="2.svg" class="icon"></div>
-                    <div class="slot" data-index="2" data-item="bow"><img src="3.svg" class="icon"></div>
+                    <div class="slot" data-index="0" data-item="sword"><img src="/public/assets/1.svg" class="icon"></div>
+                    <div class="slot" data-index="1" data-item="axe"><img src="/public/assets/2.svg" class="icon"></div>
+                    <div class="slot" data-index="2" data-item="bow"><img src="/public/assets/3.svg" class="icon"></div>
                     <div class="slot" data-index="3" data-item="potion"></div>
                     <div class="slot" data-index="4" data-item="anything"></div>
                 </div>
 
                 <div class="construction-bar">
-                    <div class="slot">
+                    <div class="slot construction-action" data-id="wall">
                         <span class="count">x5</span>
                     </div>
-                    <div class="slot">
+                    <div class="slot construction-action" data-id="gold-mine">
                         <span class="count">x2</span>
                     </div>
-                    <div class="slot">
+                    <div class="slot construction-action" data-id="tower">
                         <span class="count">x3</span>
                     </div>
-                    <div class="slot">
+                    <div class="slot construction-action" data-id="construction4">
+                        <span class="count">x4</span>
+                    </div>
+                    <div class="slot construction-action" data-id="construction5">
+                        <span class="count">x4</span>
+                    </div>
+                    <div class="slot construction-action" data-id="construction6">
+                        <span class="count">x4</span>
+                    </div>
+                    <div class="slot construction-action" data-id="construction7">
                         <span class="count">x4</span>
                     </div>
                 </div>
@@ -71,7 +80,7 @@
         </div>
         <canvas id="game"></canvas>
 
-        <script type="module" src="main.js"></script>
+        <script type="module" src="public/js/main.js"></script>
 
     </body>
 </html>

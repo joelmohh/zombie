@@ -8,41 +8,18 @@ kaplay({
     canvas: document.getElementById('game'),
     touchToMouse: true
 })
-window.addEventListener("keydown", (e) => {
-    if (e.key === "F1") {
-        e.preventDefault();
-    }
-});
-// GAME SETTINGS
-const MAP_SIZE = 10000;
-const GRID_SIZE = 50;
-const ZOOM_LEVEL = 0.6;
-const SPEED = 500;
+
+import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, THICKNESS, BUILDING_TYPES } from './config.js';
+import { loadAllSprites } from './assets.js';
+import { updateLeaderboard } from './leaderboard.js';
+
+loadAllSprites()
+updateLeaderboard();
 
 let attackOffset = 0;
 
-// Load Sprites
-function loadSafeSprite(name, url) {
-    loadSprite(name, url, {
-        sliceX: 1,
-        sliceY: 1,
-        anims: {
-            idle: { from: 0, to: 0 }
-        }
-    });
-}
-
-loadSafeSprite("player", "player.svg");
-loadSafeSprite("sword", "1.svg");
-loadSafeSprite("axe", "2.svg");
-loadSafeSprite("bow", "3.svg");
-loadSafeSprite("hands", "hands.svg");
-loadSafeSprite("tree", "tree.svg");
-loadSafeSprite("stone", "stone.svg");
-loadSafeSprite("wall", "brick.svg");
-
 /*
-/  SCENARY SETUP
+/  MAP SETUP
 */
 
 add([
@@ -53,7 +30,6 @@ add([
     "ground"
 ])
 
-const THICKNESS = 0;
 const walls = [
     { pos: vec2(0, -THICKNESS), size: vec2(MAP_SIZE, THICKNESS) },
     { pos: vec2(0, MAP_SIZE), size: vec2(MAP_SIZE, THICKNESS) },
@@ -98,6 +74,8 @@ function drawGrid() {
     }
 }
 add([drawGrid(), z(-90)]);
+
+// Focus on canvas
 
 document.getElementById("game").focus();
 window.addEventListener("mousedown", (e) => {
@@ -209,23 +187,6 @@ function updateMiniMap() {
     mini.style.top = `${Math.max(0, Math.min(100, pY))}%`;
 }
 
-// --- CONSTRUCTION CONFIG ---
-const BUILDING_TYPES = {
-    "wall": {
-        sprite: "wall",
-        width: 100,
-        height: 20,
-        scale: 0.05,
-        areaShape: new Rect(vec2(0, 0), 1040, 1040)
-    },
-    "gold-mine": {
-        sprite: "wall",
-        width: GRID_SIZE * 3,
-        height: GRID_SIZE * 3,
-        scale: 0.25,
-        areaShape: new Rect(vec2(0, 0), 1000, 1000)
-    }
-};
 
 let currentBuilding = null;
 let placementGhost = null;
@@ -268,26 +229,7 @@ onUpdate(() => {
     }
 });
 
-// Leaderboard
-const leaderboardList = document.getElementById('leaderboard-list');
-const playersData = [
-    { name: 'Alice', score: 1500 },
-    { name: 'Bob', score: 1200 },
-    { name: 'Charlie', score: 900 },
-    { name: 'Diana', score: 800 },
-    { name: 'Eve', score: 600 },
-];
-function updateLeaderboard() {
-    leaderboardList.innerHTML = "";
-    playersData.forEach((p, i) => {
-        const li = document.createElement('li');
-        li.innerText = `${i + 1}. ${p.name} - ${p.score} pts`;
-        leaderboardList.appendChild(li);
-    });
-}
-updateLeaderboard();
-
-
+// Building Logic
 function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
     if (!structure) return;
@@ -455,7 +397,6 @@ function getResource(type) {
 }
 
 function damage(target) {
-    console.log("Dano causado!");
     target.color = rgb(255, 0, 0);
     wait(0.1, () => target.color = rgb(255, 255, 255));
 }
@@ -479,7 +420,6 @@ onUpdate(() => {
                 obj.id = add([
                     sprite("tree"),
                     pos(obj.x, obj.y),
-                    color(20, 100, 20),
                     area({ shape: new Circle(vec2(0), 1000) }),
                     body({ isStatic: true }),
                     anchor("center"),
@@ -491,7 +431,6 @@ onUpdate(() => {
                 obj.id = add([
                     sprite("stone"),
                     pos(obj.x, obj.y),
-                    color(120, 120, 120),
                     area({ shape: new Circle(vec2(0), 1200) }),
                     body({ isStatic: true }),
                     anchor("center"),
