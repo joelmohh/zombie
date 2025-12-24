@@ -1,3 +1,7 @@
+*{
+    cursor: none;
+}
+
 body{
     margin: 0;
     overflow: hidden;
@@ -6,6 +10,7 @@ body{
     touch-action: none; 
     -ms-touch-action: none;
     background-color: black;
+    cursor: none;
 }
 canvas {
     display: block;

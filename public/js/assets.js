@@ -19,4 +19,5 @@ export function loadAllSprites() {
     loadSafeSprite("stone", "/public/assets/stone.svg");
     loadSafeSprite("wall", "/public/assets/brick.png");
     loadSafeSprite("tower", "/public/assets/brick.png");
+    loadSafeSprite("cursor", "./public/assets/cursor.png");
 }

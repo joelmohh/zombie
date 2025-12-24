@@ -2,12 +2,17 @@ import kaplay from 'https://unpkg.com/kaplay@4000.0.0-alpha.24/dist/kaplay.mjs';
 
 kaplay({
     background: [255, 255, 255],
-    debug: false,
+    debug: true,
     pixelDensity: Math.min(devicePixelRatio, 2),
     crisp: true,
     canvas: document.getElementById('game'),
     touchToMouse: true
 })
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F1') {
+        e.preventDefault();
+    }
+});
 
 import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, THICKNESS, BUILDING_TYPES } from './config.js';
 import { loadAllSprites } from './assets.js';
@@ -139,7 +144,7 @@ onKeyDown('d', () => player.move(SPEED, 0));
 
 // INVENTORY
 let equippedWeapon = null;
-const slots = document.querySelectorAll('.slot');
+const slots = document.querySelectorAll('.inventory .slot');
 slots.forEach(slot => {
     slot.addEventListener('click', () => {
         currentBuilding = null;
@@ -190,6 +195,7 @@ function updateMiniMap() {
 
 let currentBuilding = null;
 let placementGhost = null;
+let canBuildHere = false;
 
 // Ghost Logic & Auto Attack Loop
 onUpdate(() => {
@@ -198,13 +204,10 @@ onUpdate(() => {
         const mouseWorld = toWorld(mousePos());
 
         let snapX, snapY;
-        if (currentBuilding === "gold-mine") {
-            snapX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-            snapY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-        } else {
-            snapX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (conf.width / 2 / 2);
-            snapY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-        }
+        snapX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+        snapY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+
+        const ghostShape = new Rect(vec2(-conf.width / 2, -conf.height / 2), conf.width, conf.height);
 
         if (!placementGhost) {
             placementGhost = add([
@@ -213,6 +216,7 @@ onUpdate(() => {
                 opacity(0.5),
                 anchor("center"),
                 scale(conf.scale),
+                area({ shape: ghostShape }),
                 z(50),
                 "ghost"
             ]);
@@ -220,7 +224,26 @@ onUpdate(() => {
             placementGhost.pos = vec2(snapX, snapY);
             placementGhost.use(sprite(conf.sprite));
             placementGhost.use(scale(conf.scale));
+            placementGhost.use(area({ shape: ghostShape }));
         }
+
+        canBuildHere = true;
+        const obstacles = ["tree", "rock", "structure", "wall", "player"];
+        
+        for (const tag of obstacles) {
+            get(tag).forEach(obj => {
+                if (placementGhost.isColliding(obj)) {
+                    canBuildHere = false;
+                }
+            });
+        }
+
+        if (!canBuildHere) {
+            placementGhost.color = rgb(255, 100, 100); 
+        } else {
+            placementGhost.color = rgb(255, 255, 255); 
+        }
+
     } else {
         if (placementGhost) {
             destroy(placementGhost);
@@ -244,34 +267,43 @@ function buildStructure(type, position) {
         z(-5),
         type,
         "structure",
-        "wall",
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
 }
 
 // Key Bindings
-onKeyPress("b", () => {
-    if (currentBuilding) {
-        currentBuilding = null;
-        console.log("Modo: ARMAS");
-    } else {
-        currentBuilding = "wall";
-        equippedWeapon = null;
-        if (equippedWeapon) destroy(equippedWeapon);
-        console.log("Modo: CONSTRUÇÃO WALL");
-    }
-});
+const constructionSlots = document.querySelectorAll('.construction-action');
 
-onKeyPress("c", () => {
-    if (currentBuilding) {
-        currentBuilding = null;
-        console.log("Modo: ARMAS");
-    } else {
-        currentBuilding = "gold-mine";
-        equippedWeapon = null;
-        if (equippedWeapon) destroy(equippedWeapon);
-        console.log("Modo: CONSTRUÇÃO MINE");
-    }
+constructionSlots.forEach(slot => {
+    slot.addEventListener('click', () => {
+        const type = slot.getAttribute('data-id');
+
+        if (!BUILDING_TYPES[type]) {
+            console.warn(`Tipo "${type}" não definido no config.js`);
+            return;
+        }
+
+        if (currentBuilding === type) {
+            currentBuilding = null;
+            slot.style.border = '2px solid white'; 
+            return;
+        }
+
+        currentBuilding = type;
+        console.log("Modo: CONSTRUÇÃO", type);
+
+        document.querySelectorAll('.inventory .slot').forEach(s => s.style.border = '2px solid white');
+        constructionSlots.forEach(s => s.style.border = '2px solid white');
+        
+        slot.style.border = '2px solid yellow';
+
+        if (equippedWeapon) {
+            destroy(equippedWeapon);
+            equippedWeapon = null;
+        }
+
+        setTimeout(() => document.getElementById("game").focus(), 10);
+    });
 });
 
 // ATTACK & INTERACTION LOGIC
@@ -282,8 +314,10 @@ let isAutoAttacking = false;
 
 function performAttack() {
     if (currentBuilding) {
-        if (placementGhost) {
+        if (placementGhost && canBuildHere) {
             buildStructure(currentBuilding, placementGhost.pos);
+        } else {
+            console.log("Local inválido para construção!");
         }
         return;
     }
