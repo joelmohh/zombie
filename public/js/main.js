@@ -78,7 +78,11 @@ export const player = add([
     color(255, 255, 0),
     anchor("center"),
     rotate(0),
-    area({ shape: new Circle(vec2(0), 455), collisionIgnore: ["door", "structure"] }),
+    area({ shape: new Circle(vec2(0), 455), collisionIgnore: ["door"] }),
+    {
+        hp: 100,
+        maxHp: 100
+    },
     body(),
     "player",
     z(10)
@@ -150,16 +154,28 @@ slots.forEach(slot => {
     })
 })
 
-let healthValue = 100;
+let healthValue = 1;
 let shieldValue = 100;
 
-function updateHealth() {
-    const hBar = document.getElementById('health-bar-fill');
-    const hText = document.getElementById('health-text');
-    const sBar = document.getElementById('shield-bar-fill');
-    const sText = document.getElementById('shield-text');
-    if (hBar) { hBar.style.width = `${healthValue}%`; hText.textContent = `Health: ${healthValue}%`; }
-    if (sBar) { sBar.style.width = `${shieldValue}%`; sText.textContent = `Shield: ${shieldValue}%`; }
+export function updateHealth() {
+    const healthText = document.getElementById('health-text');
+    const healthBarFill = document.getElementById('health-bar-fill');
+    healthText.textContent = `Health: ${Math.floor(player.hp) / player.maxHp * 100}%`;
+    if (healthBarFill) {
+        healthBarFill.style.width = `${Math.floor((player.hp / player.maxHp) * 100)}%`;
+    }
+}
+export function updateBuildingHealthBar(target) {
+    if(!target.hp) return;
+
+    target.add([
+        rect(600, 80),
+        pos(0, -target.height * target.scale.y / 2 - 10),
+        anchor("center"),
+        color(0, 0, 0),
+        z(100),
+        "building-health-bar-bg"
+    ])
 }
 
 function updateMiniMap() {
@@ -307,6 +323,11 @@ function buildStructure(type, position) {
         scale(structure.scale),
         z(0),
         type,
+        structure.commontype,
+        { 
+            hp: structure.health,       
+            maxHp: structure.health     
+        },
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
 }

@@ -13,7 +13,8 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 20 },
         scale: 0.05,
         health: 200,
-        max: 100
+        max: 100,
+        commontype: "structure",
     },
     "gold-mine": {
         sprite: "gold-mine", 
@@ -23,7 +24,8 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 150, h: 150 },
         scale: 0.05,
         health: 500,
-        max: 1
+        max: 1,
+        commontype: "structure",
     },
     "door":{
         sprite: "door",
@@ -33,7 +35,8 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 20 },
         scale: 0.05,
         health: 200,
-        max: 100
+        max: 100,
+        commontype: "structure",
     },
     "tower_archer": {
         sprite: "wall", 
@@ -46,6 +49,7 @@ export const BUILDING_TYPES = {
         fireRate: 0.8,       
         damage: 50,
         type: "single",      
+        commontype: "structure",
         bulletSprite: "sword" 
     },
     "tower_cannon": {
@@ -59,6 +63,7 @@ export const BUILDING_TYPES = {
         fireRate: 2.0,       
         damage: 50,
         type: "explosive",   
+        commontype: "structure",
         bulletSprite: "stone" 
     },
     "tower_bomber": {
@@ -72,6 +77,7 @@ export const BUILDING_TYPES = {
         fireRate: 3.0,       
         damage: 100,
         type: "bomb",        
+        commontype: "structure",
         bulletSprite: "stone"
     },
     "tower_magic": {
@@ -85,6 +91,7 @@ export const BUILDING_TYPES = {
         fireRate: 1.5,
         damage: 10,          
         type: "shotgun",     
+        commontype: "structure",
         bulletSprite: "sword" 
     }
 };

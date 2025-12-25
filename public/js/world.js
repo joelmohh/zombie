@@ -1,5 +1,5 @@
 import { MAP_SIZE, THICKNESS, GRID_SIZE } from "./config.js";
-import { player } from "./main.js";
+import { player, updateHealth, updateBuildingHealthBar } from "./main.js";
 
 const WORLD_SEED = 12345;
 const TOTAL_TREES = 40;
@@ -37,7 +37,8 @@ export function damage(target) {
     wait(0.1, () => target.color = rgb(255, 255, 255));
 }
 
-// World Rendering Update
+document.addEventListener("DOMContentLoaded", () => {
+
 onUpdate(() => {
     const cam = getCamPos();
     const vpWidth = width() / getCamScale().x;
@@ -80,6 +81,7 @@ onUpdate(() => {
         }
     });
 });
+
 add([
     rect(MAP_SIZE, MAP_SIZE),
     pos(0, 0),
@@ -132,3 +134,34 @@ function drawGrid() {
     }
 }
 add([drawGrid(), z(-90)]);
+updateHealth();
+
+});
+export function applyDamage(target, amount) {    
+    if (!target.hp) return; 
+
+    if(target.is("player")) {
+        updateHealth();
+        if (target.hp <= 0) {
+        shake(20);
+            target.hp = target.maxHp; 
+            target.pos = vec2(1000, 1000);
+            updateHealth();
+        }
+    }else if(target.is("structure")) {
+        if (target.hp <= 0) {
+            destroy(target);
+            return;
+        }
+        updateBuildingHealthBar(target);
+    }
+
+    target.hp -= amount;
+    target.color = rgb(255, 100, 100);
+
+    setTimeout(() => {
+        if (target.exists()) target.color = rgb(255, 255, 255);
+    }, 100);
+
+    
+}
