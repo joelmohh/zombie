@@ -101,7 +101,7 @@ function createExplosion(posValue, radius, damage) {
     ]);
 
     get("zombie").forEach(z => {
-        if (pos.dist(z.pos) <= radius) {
+        if (posValue.dist(z.pos) <= radius) {
             damageZombie(z, damage);
         }
     });

@@ -27,6 +27,17 @@ export const BUILDING_TYPES = {
         max: 1,
         commontype: "structure",
     },
+    "gold-miner": {
+        sprite: "wall", 
+        width: 150, 
+        height: 150, 
+        offset: { x: -75, y: -75 },
+        hitboxSize: { w: 150, h: 150 },
+        scale: 0.15,
+        health: 500,
+        max: 8,
+        commontype: "structure",
+    },
     "door":{
         sprite: "door",
         width: 100, 

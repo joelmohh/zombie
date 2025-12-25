@@ -328,7 +328,7 @@ function buildStructure(type, position) {
             hp: structure.health,       
             maxHp: structure.health     
         },
-        offscreen({ hide: true, pause: true, distance: 300 })
+        offscreen({ hide: true, pause: true, distance: 1000 })
     ]);
 }
 
