@@ -32,7 +32,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, THICKNESS, BUILDING_TYPES } from './config.js';
+import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, BUILDING_TYPES, WORLD_PADDING } from './config.js';
 import { loadAllSprites } from './assets.js';
 import { updateLeaderboard } from './leaderboard.js';
 import { initDefense } from './defense.js';
@@ -215,11 +215,16 @@ let canBuildHere = false;
 // Ghost Logic
 onUpdate(() => {
     if (currentBuilding) {
+        get('border-guide').forEach(guide => {
+            guide.opacity = lerp(guide.opacity, 0.25, dt() * 10);
+        });
+
+
         const conf = BUILDING_TYPES[currentBuilding];
         const mouseWorld = toWorld(mousePos());
         let idealX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
         let idealY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-
+        
         if (!placementGhost) {
             placementGhost = add([
                 sprite(conf.sprite),
@@ -227,16 +232,16 @@ onUpdate(() => {
                 opacity(0.5),
                 anchor("center"),
                 scale(conf.scale),
-                area({ shape: conf.areaShape }),
-                z(50),
+                area({ shape: conf.areaShape }), 
+                z(50), 
                 "ghost"
             ]);
             if (conf.isDefense) {
                 placementGhost.add([
-                    sprite("wall"),
+                    sprite("wall"), 
                     pos(0, 0),
                     anchor("center"),
-                    scale(3),
+                    scale(3), 
                     opacity(1),
                     z(-1)
                 ]);
@@ -257,7 +262,7 @@ onUpdate(() => {
         let foundSafeSpot = false;
 
         const allObstacles = [
-            ...get("tree"), ...get("rock"), ...get("player"),
+            ...get("tree"), ...get("rock"), ...get("player"), 
             ...get("structure")
         ];
 
@@ -265,52 +270,59 @@ onUpdate(() => {
             const testPos = vec2(idealX + offset.x, idealY + offset.y);
             let isFree = true;
 
-            for (const obj of allObstacles) {
-                if (obj.is("ghost")) continue;
+            if (testPos.x < WORLD_PADDING || 
+                testPos.x > MAP_SIZE - WORLD_PADDING || 
+                testPos.y < WORLD_PADDING || 
+                testPos.y > MAP_SIZE - WORLD_PADDING) {
+                isFree = false; 
+            }
 
-                if (obj.is("tree") || obj.is("rock") || obj.is("player")) {
-                    const ghostRadius = (conf.width * conf.scale) / 2;
-                    const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius)
-                        ? obj.area.shape.radius * obj.scale.x
-                        : 40;
+            if (isFree) {
+                for (const obj of allObstacles) {
+                    if (obj.is("ghost")) continue;
 
-                    if (testPos.dist(obj.pos) < (objRadius + ghostRadius)) {
-                        isFree = false;
-                        break;
-                    }
-                }
-                else {
-                    const isStructureA = currentBuilding === "wall" || currentBuilding === "door";
-                    const isStructureB = obj.is("wall") || obj.is("door");
+                    if (obj.is("tree") || obj.is("rock") || obj.is("player")) {
+                        const ghostRadius = (conf.width * conf.scale) / 2;
+                        const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius) 
+                                          ? obj.area.shape.radius * obj.scale.x 
+                                          : 40; 
 
-                    if (isStructureA && isStructureB) {
-                        if (testPos.dist(obj.pos) < 40) {
+                        if (testPos.dist(obj.pos) < (objRadius + ghostRadius)) {
                             isFree = false;
                             break;
                         }
-                    }
+                    } 
                     else {
+                        const isStructureA = currentBuilding === "wall" || currentBuilding === "door";
+                        const isStructureB = obj.is("wall") || obj.is("door");
 
-                        let objConf = { width: 50, height: 50 };
-                        if (obj.buildingId && BUILDING_TYPES[obj.buildingId]) {
-                            objConf = BUILDING_TYPES[obj.buildingId];
-                        } else if (obj.is("wall")) {
-                            objConf = BUILDING_TYPES["wall"];
-                        } else if (obj.is("gold-mine")) {
-                            objConf = BUILDING_TYPES["gold-mine"];
-                        }
+                        if (isStructureA && isStructureB) {
+                            if (testPos.dist(obj.pos) < 40) {
+                                isFree = false;
+                                break;
+                            }
+                        } 
+                        else {
+                            let objConf = { width: 50, height: 50 }; 
+                            if (obj.buildingId && BUILDING_TYPES[obj.buildingId]) {
+                                objConf = BUILDING_TYPES[obj.buildingId];
+                            } else if (obj.is("wall")) {
+                                objConf = BUILDING_TYPES["wall"];
+                            } else if (obj.is("gold-mine")) {
+                                objConf = BUILDING_TYPES["gold-mine"];
+                            }
 
-                        const minDistanceX = (conf.width + objConf.width) / 2;
-                        const minDistanceY = (conf.height + objConf.height) / 2;
+                            const minDistanceX = (conf.width + objConf.width) / 2;
+                            const minDistanceY = (conf.height + objConf.height) / 2;
 
-                        const distX = Math.abs(testPos.x - obj.pos.x);
-                        const distY = Math.abs(testPos.y - obj.pos.y);
+                            const distX = Math.abs(testPos.x - obj.pos.x);
+                            const distY = Math.abs(testPos.y - obj.pos.y);
 
-
-                        if (distX < minDistanceX && distY < minDistanceY) {
-                            isFree = false;
-                            break;
-                        }
+                            if (distX < minDistanceX && distY < minDistanceY) {
+                                isFree = false;
+                                break;
+                            }
+                        }                    
                     }
                 }
             }
@@ -318,11 +330,11 @@ onUpdate(() => {
             if (isFree) {
                 finalPos = testPos;
                 foundSafeSpot = true;
-                break;
+                break; 
             }
         }
 
-        placementGhost.pos = finalPos;
+        placementGhost.pos = finalPos; 
         canBuildHere = foundSafeSpot;
 
         if (foundSafeSpot) {
@@ -337,6 +349,9 @@ onUpdate(() => {
             destroy(placementGhost);
             placementGhost = null;
         }
+        get('border-guide').forEach(guide => {
+            guide.opacity = lerp(guide.opacity, 0, dt() * 10);
+        });
     }
 });
 // Building Logic
@@ -383,6 +398,7 @@ function buildStructure(type, position) {
             anchor("center"),
             pos(0, 0),
             scale(1 / 3), 
+            rotate(0),
             "turret"     
         ]);
     }

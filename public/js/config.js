@@ -3,6 +3,7 @@ export const GRID_SIZE = 50;
 export const ZOOM_LEVEL = 0.6;
 export const SPEED = 500;
 export const THICKNESS = 0;
+export const WORLD_PADDING = 250;
 
 export const BUILDING_TYPES = {
     "wall": {
@@ -71,7 +72,7 @@ export const BUILDING_TYPES = {
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
-        scale: 0.15,
+        scale: 0.05,
         health: 400,
         range: 350,
         fireRate: 2.0,       
@@ -86,7 +87,7 @@ export const BUILDING_TYPES = {
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
-        scale: 0.15,
+        scale: 0.05,
         health: 300,
         range: 500,          
         fireRate: 3.0,       
@@ -101,7 +102,7 @@ export const BUILDING_TYPES = {
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
-        scale: 0.15,
+        scale: 0.05,
         health: 250,
         range: 250,          
         fireRate: 1.5,
@@ -116,7 +117,7 @@ export const BUILDING_TYPES = {
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
-        scale: 0.15,
+        scale: 0.05,
         type: "build_bases",
         commontype: "structure",
     }

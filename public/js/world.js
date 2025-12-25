@@ -1,4 +1,4 @@
-import { MAP_SIZE, THICKNESS, GRID_SIZE } from "./config.js";
+import { MAP_SIZE, THICKNESS, GRID_SIZE, WORLD_PADDING } from "./config.js";
 import { player, updateHealth, updateBuildingHealthBar } from "./main.js";
 
 const WORLD_SEED = 12345;
@@ -165,3 +165,23 @@ export function applyDamage(target, amount) {
 
     
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+function addBorderGuide(position, size) {
+    add([
+        rect(size.x, size.y),
+        pos(position),
+        color(255, 0, 0), 
+        opacity(0),       
+        area(),           
+        z(5),             
+        "border-guide"    
+    ]);
+}
+
+addBorderGuide(vec2(0, 0), vec2(MAP_SIZE, WORLD_PADDING));
+addBorderGuide(vec2(0, MAP_SIZE - WORLD_PADDING), vec2(MAP_SIZE, WORLD_PADDING));
+addBorderGuide(vec2(0, WORLD_PADDING), vec2(WORLD_PADDING, MAP_SIZE - (WORLD_PADDING * 2)));
+addBorderGuide(vec2(MAP_SIZE - WORLD_PADDING, WORLD_PADDING), vec2(WORLD_PADDING, MAP_SIZE - (WORLD_PADDING * 2)));
+
+});
