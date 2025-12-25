@@ -11,19 +11,19 @@ kaplay({
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F1') {
         e.preventDefault();
-    }else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
         if (currentBuilding) {
             currentBuilding = null;
-            
+
             document.querySelectorAll('.construction-action').forEach(s => {
                 s.style.border = '2px solid white';
             });
-            
+
             return
         }
         if (equippedWeapon) {
-            destroy(equippedWeapon); 
-            equippedWeapon = null;   
+            destroy(equippedWeapon);
+            equippedWeapon = null;
 
             document.querySelectorAll('.inventory .slot').forEach(s => {
                 s.style.border = '2px solid white';
@@ -37,6 +37,7 @@ import { loadAllSprites } from './assets.js';
 import { updateLeaderboard } from './leaderboard.js';
 import { initDefense } from './defense.js';
 import { initEnemySystem, spawnZombie } from './enemy.js';
+import { getResource } from './world.js';
 
 loadAllSprites()
 updateLeaderboard();
@@ -44,13 +45,12 @@ initDefense();
 initEnemySystem();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // mouse click to spawn zombie for testing REMOVE LATER
     document.getElementById("game").addEventListener('click', () => {
         const randomOffset = vec2(rand(-300, 300), rand(-300, 300));
         const spawnPos = player.pos.add(randomOffset);
-        
-        spawnZombie(spawnPos);
-        
+
+//        spawnZombie(spawnPos);
+
         document.getElementById("game").focus();
     });
 })
@@ -117,6 +117,15 @@ onUpdate(() => {
             performAttack();
         }
     }
+
+    const isHoveringUI = document.querySelector('.modal:hover') || document.querySelector('.construction-bar:hover') || document.querySelector('.inventory:hover');
+
+    if (!isHoveringUI) {
+        const mouseWorld = toWorld(mousePos());
+        const direction = mouseWorld.sub(player.pos);
+        player.angle = direction.angle() + 90 + attackOffset;
+    }
+
 })
 
 onKeyDown('w', () => player.move(0, -SPEED));
@@ -166,7 +175,7 @@ export function updateHealth() {
     }
 }
 export function updateBuildingHealthBar(target) {
-    if(!target.hp) return;
+    if (!target.hp) return;
 
     target.add([
         rect(600, 80),
@@ -186,6 +195,18 @@ function updateMiniMap() {
     mini.style.top = `${Math.max(0, Math.min(100, pY))}%`;
 }
 
+// Minner animation
+onUpdate("gold-miner", (m) => {
+    const spinner = m.get("turret")[0];
+
+    if (spinner) {
+        const animSpeed = 200;
+        spinner.angle += animSpeed * dt();
+
+        if (spinner.angle >= 360) spinner.angle -= 360;
+    }
+});
+
 
 let currentBuilding = null;
 let placementGhost = null;
@@ -198,7 +219,7 @@ onUpdate(() => {
         const mouseWorld = toWorld(mousePos());
         let idealX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
         let idealY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-        
+
         if (!placementGhost) {
             placementGhost = add([
                 sprite(conf.sprite),
@@ -206,10 +227,20 @@ onUpdate(() => {
                 opacity(0.5),
                 anchor("center"),
                 scale(conf.scale),
-                area({ shape: conf.areaShape }), 
-                z(50), 
+                area({ shape: conf.areaShape }),
+                z(50),
                 "ghost"
             ]);
+            if (conf.isDefense) {
+                placementGhost.add([
+                    sprite("wall"),
+                    pos(0, 0),
+                    anchor("center"),
+                    scale(3),
+                    opacity(1),
+                    z(-1)
+                ]);
+            }
         } else {
             placementGhost.use(sprite(conf.sprite));
             placementGhost.use(scale(conf.scale));
@@ -226,8 +257,8 @@ onUpdate(() => {
         let foundSafeSpot = false;
 
         const allObstacles = [
-            ...get("tree"), ...get("rock"), ...get("player"), 
-            ...get("wall"), ...get("gold-mine"), ...get("tower"), ...get("door")
+            ...get("tree"), ...get("rock"), ...get("player"),
+            ...get("structure")
         ];
 
         for (const offset of offsets) {
@@ -235,17 +266,19 @@ onUpdate(() => {
             let isFree = true;
 
             for (const obj of allObstacles) {
+                if (obj.is("ghost")) continue;
+
                 if (obj.is("tree") || obj.is("rock") || obj.is("player")) {
                     const ghostRadius = (conf.width * conf.scale) / 2;
-                    const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius) 
-                                      ? obj.area.shape.radius * obj.scale.x 
-                                      : 40; 
+                    const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius)
+                        ? obj.area.shape.radius * obj.scale.x
+                        : 40;
 
                     if (testPos.dist(obj.pos) < (objRadius + ghostRadius)) {
                         isFree = false;
                         break;
                     }
-                } 
+                }
                 else {
                     const isStructureA = currentBuilding === "wall" || currentBuilding === "door";
                     const isStructureB = obj.is("wall") || obj.is("door");
@@ -255,35 +288,41 @@ onUpdate(() => {
                             isFree = false;
                             break;
                         }
-                    } 
+                    }
                     else {
-                        
-                        let objConf = { width: 50, height: 50 }; 
-                        if (obj.is("wall")) objConf = BUILDING_TYPES["wall"];
-                        else if (obj.is("gold-mine")) objConf = BUILDING_TYPES["gold-mine"];
-                        else if (obj.is("tower")) objConf = BUILDING_TYPES["tower"];
-                        else if (obj.is("door")) objConf = BUILDING_TYPES["door"];
 
-                        const overlapX = (conf.width + objConf.width) / 2;
-                        const overlapY = (conf.height + objConf.height) / 2;
+                        let objConf = { width: 50, height: 50 };
+                        if (obj.buildingId && BUILDING_TYPES[obj.buildingId]) {
+                            objConf = BUILDING_TYPES[obj.buildingId];
+                        } else if (obj.is("wall")) {
+                            objConf = BUILDING_TYPES["wall"];
+                        } else if (obj.is("gold-mine")) {
+                            objConf = BUILDING_TYPES["gold-mine"];
+                        }
 
-                        if (Math.abs(testPos.x - obj.pos.x) < overlapX && 
-                            Math.abs(testPos.y - obj.pos.y) < overlapY) {
+                        const minDistanceX = (conf.width + objConf.width) / 2;
+                        const minDistanceY = (conf.height + objConf.height) / 2;
+
+                        const distX = Math.abs(testPos.x - obj.pos.x);
+                        const distY = Math.abs(testPos.y - obj.pos.y);
+
+
+                        if (distX < minDistanceX && distY < minDistanceY) {
                             isFree = false;
                             break;
                         }
-                    }                    
+                    }
                 }
             }
 
             if (isFree) {
                 finalPos = testPos;
                 foundSafeSpot = true;
-                break; 
+                break;
             }
         }
 
-        placementGhost.pos = finalPos; 
+        placementGhost.pos = finalPos;
         canBuildHere = foundSafeSpot;
 
         if (foundSafeSpot) {
@@ -309,27 +348,44 @@ function buildStructure(type, position) {
     let opacityValue = 1
 
     if (type === "door") {
-       areaConfig.collisionIgnore = ["player"];
-       opacityValue = 0.5;
+        areaConfig.collisionIgnore = ["player"];
+        opacityValue = 0.5;
     }
 
-    add([
-        sprite(structure.sprite),
+    const hasTurret = structure.isDefense;
+
+    const baseScale = structure.isDefense ? (structure.scale * 3) : structure.scale;
+    const baseSprite = structure.isDefense ? "wall" : structure.sprite;
+
+    const building = add([
+        sprite(baseSprite),
         opacity(opacityValue),
         pos(position),
         area(areaConfig),
         body({ isStatic: true }),
         anchor("center"),
-        scale(structure.scale),
+        scale(baseScale),
         z(0),
         type,
-        structure.commontype,
-        { 
-            hp: structure.health,       
-            maxHp: structure.health     
+        "structure",
+
+        {
+            hp: structure.health,
+            maxHp: structure.health,
+            buildingId: type,
+            cost: structure.cost
         },
-        offscreen({ hide: true, pause: true, distance: 1000 })
+        offscreen({ hide: true, pause: true, distance: 300 })
     ]);
+    if (hasTurret) {
+        building.add([
+            sprite(structure.sprite), 
+            anchor("center"),
+            pos(0, 0),
+            scale(1 / 3), 
+            "turret"     
+        ]);
+    }
 }
 
 // Key Bindings
@@ -346,7 +402,7 @@ constructionSlots.forEach(slot => {
 
         if (currentBuilding === type) {
             currentBuilding = null;
-            slot.style.border = '2px solid white'; 
+            slot.style.border = '2px solid white';
             return;
         }
 
@@ -355,7 +411,7 @@ constructionSlots.forEach(slot => {
 
         document.querySelectorAll('.inventory .slot').forEach(s => s.style.border = '2px solid white');
         constructionSlots.forEach(s => s.style.border = '2px solid white');
-        
+
         slot.style.border = '2px solid yellow';
 
         if (equippedWeapon) {
@@ -386,7 +442,7 @@ function performAttack() {
         }
         if (placementGhost && canBuildHere) {
             buildStructure(currentBuilding, placementGhost.pos);
-        } 
+        }
     }
 
     if (isAttacking || !equippedWeapon) return;

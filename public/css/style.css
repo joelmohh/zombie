@@ -124,8 +124,8 @@ canvas {
     border: 2px solid white;
 }
 .slot{
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     background-color: rgba(100, 100, 100, 0.8);
     border: 2px solid white;
     display: flex;
@@ -147,12 +147,11 @@ canvas {
 }
 
 .construction-bar{
-    width: 460px;
+    width: auto;
     height: 80px;
-    background-color: rgba(50, 50, 50, 0.6);
-    border: 2px solid white;
     display: flex;
     align-items: center;
+    gap: 10px;
     justify-content: center;
     color: white;
 }
@@ -216,6 +215,7 @@ canvas {
     align-items: flex-end;
     gap: 5px;
 }
+
 .minimap-container {
     width: 150px;
     height: 150px;
@@ -260,4 +260,68 @@ canvas {
 }
 .btn-map.party{
     background-color: rgba(0, 0, 128, 0.6);
+}
+.resources{
+    top: 20px;
+    right: 20px;
+    width: 250px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid white;
+    color: white;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: start;
+}
+.resources-amount{
+    float: right;
+}
+.modal {
+    position: fixed;
+    top: 100px; 
+    left: 20px;
+    
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 2px solid white;
+    color: white;
+    padding: 0; 
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    
+    pointer-events: auto;
+    
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+    min-width: 300px;
+}
+
+.modal-header {
+    background-color: #333;
+    padding: 10px;
+    cursor: grab; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #555;
+    font-weight: bold;
+    color: #ffcc00;
+}
+
+.modal-header:active {
+    cursor: grabbing;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+.close-btn {
+    cursor: pointer;
+    background: #c80000;
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
 }

@@ -28,4 +28,8 @@ export function loadAllSprites() {
     loadSafeSprite("tower", "/public/assets/brick.png");
     loadSafeSprite("gold-mine", "/public/assets/gold-mine.svg");
     loadSafeSprite('door', '/public/assets/door.svg');
+
+
+    loadSafeSprite('buildingTop', '/public/assets/buildingTop.svg');
+    loadSafeSprite('minerTop', '/public/assets/minerTop.svg');
 }

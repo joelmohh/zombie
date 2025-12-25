@@ -11,11 +11,18 @@ export function initDefense() {
 
             if (target) {
                 const angleToZombie = target.pos.sub(tower.pos).angle();
-                tower.angle = angleToZombie; 
+                const turret = tower.get("turret")[0];
+                if (turret) {
+                    turret.angle = angleToZombie; 
+                } else {
+                    tower.angle = angleToZombie; 
+                }
 
                 tower.timer -= dt();
                 if (tower.timer <= 0) {
-                    shoot(tower, type, target.pos, config);
+                    const shootAngle = turret ? turret.angle : tower.angle;
+                    
+                    shoot(tower, type, target.pos, config, shootAngle);
                     tower.timer = config.fireRate;
                 }
             }
@@ -42,10 +49,11 @@ function findNearestEnemy(pos, range) {
     return nearest;
 }
 
-function shoot(tower, type, targetPos, config) {
-    const spawnPos = tower.pos.add(vec2(40, 0).rotate(tower.angle));
-    const angle = tower.angle;
+function shoot(tower, type, targetPos, config, explicitAngle) {
+    const angle = explicitAngle !== undefined ? explicitAngle : tower.angle;
 
+    const spawnPos = tower.pos.add(vec2(40, 0).rotate(angle));
+    
     if (config.type === "shotgun") {
         createProjectile(spawnPos, angle, config);
         createProjectile(spawnPos, angle - 15, config);
@@ -65,7 +73,7 @@ function createProjectile(posValue, angle, config) {
         sprite(config.bulletSprite || "sword"), 
         pos(posValue),
         anchor("center"),
-        scale(0.5),
+        scale(0.05),
         rotate(angle),
         area(),
         move(angle, speed),

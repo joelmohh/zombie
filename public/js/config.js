@@ -28,14 +28,16 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "gold-miner": {
-        sprite: "wall", 
+        sprite: "minerTop", 
         width: 150, 
         height: 150, 
         offset: { x: -75, y: -75 },
         hitboxSize: { w: 150, h: 150 },
-        scale: 0.15,
+        scale: 0.05,
         health: 500,
         max: 8,
+        isDefense: true,
+        special: "gold-miner",
         commontype: "structure",
     },
     "door":{
@@ -50,21 +52,22 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "tower_archer": {
-        sprite: "wall", 
+        sprite: "buildingTop", 
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
-        scale: 0.15,
+        scale: 0.05,
         health: 200,
         range: 400,          
         fireRate: 0.8,       
         damage: 50,
         type: "single",      
         commontype: "structure",
+        isDefense: true,
         bulletSprite: "sword" 
     },
     "tower_cannon": {
-        sprite: "wall",
+        sprite: "buildingTop",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -75,10 +78,11 @@ export const BUILDING_TYPES = {
         damage: 50,
         type: "explosive",   
         commontype: "structure",
+        isDefense: true,
         bulletSprite: "stone" 
     },
     "tower_bomber": {
-        sprite: "wall",
+        sprite: "buildingTop",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -89,10 +93,11 @@ export const BUILDING_TYPES = {
         damage: 100,
         type: "bomb",        
         commontype: "structure",
+        isDefense: true,
         bulletSprite: "stone"
     },
     "tower_magic": {
-        sprite: "wall",
+        sprite: "buildingTop",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -102,8 +107,18 @@ export const BUILDING_TYPES = {
         fireRate: 1.5,
         damage: 10,          
         type: "shotgun",     
+        isDefense: true,
         commontype: "structure",
         bulletSprite: "sword" 
+    },
+    "build_bases": {
+        sprite: "wall",
+        width: 100, height: 100,
+        offset: { x: -50, y: -50 },
+        hitboxSize: { w: 100, h: 100 },
+        scale: 0.15,
+        type: "build_bases",
+        commontype: "structure",
     }
 };
 
