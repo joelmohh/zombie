@@ -8,7 +8,7 @@ export const WORLD_PADDING = 250;
 export const BUILDING_TYPES = {
     "wall": {
         sprite: "wall",
-        width: 100, 
+        width: 50, 
         height: 20,
         offset: { x: -50, y: -10 }, 
         hitboxSize: { w: 100, h: 20 },
@@ -43,7 +43,7 @@ export const BUILDING_TYPES = {
     },
     "door":{
         sprite: "door",
-        width: 100, 
+        width: 50, 
         height: 20,
         offset: { x: -50, y: -10 }, 
         hitboxSize: { w: 100, h: 20 },
@@ -75,12 +75,12 @@ export const BUILDING_TYPES = {
         scale: 0.05,
         health: 400,
         range: 350,
-        fireRate: 2.0,       
-        damage: 50,
-        type: "explosive",   
+        fireRate: 1,       
+        damage: 60,
+        type: "single",   
         commontype: "structure",
         isDefense: true,
-        bulletSprite: "stone" 
+        bulletSprite: "wall" 
     },
     "tower_bomber": {
         sprite: "buildingTop",
@@ -90,12 +90,12 @@ export const BUILDING_TYPES = {
         scale: 0.05,
         health: 300,
         range: 500,          
-        fireRate: 3.0,       
-        damage: 100,
+        fireRate: 2.0,       
+        damage: 80,
         type: "bomb",        
         commontype: "structure",
         isDefense: true,
-        bulletSprite: "stone"
+        bulletSprite: "wall"
     },
     "tower_magic": {
         sprite: "buildingTop",
@@ -106,7 +106,7 @@ export const BUILDING_TYPES = {
         health: 250,
         range: 250,          
         fireRate: 1.5,
-        damage: 10,          
+        damage: 50,          
         type: "shotgun",     
         isDefense: true,
         commontype: "structure",

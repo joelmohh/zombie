@@ -8,6 +8,7 @@ kaplay({
     canvas: document.getElementById('game'),
     touchToMouse: true
 })
+
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F1') {
         e.preventDefault();
@@ -50,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const randomOffset = vec2(rand(-300, 300), rand(-300, 300));
         const spawnPos = player.pos.add(randomOffset);
 
-        //        spawnZombie(spawnPos);
+        spawnZombie(spawnPos);
 
         document.getElementById("game").focus();
     });
@@ -82,7 +83,13 @@ export const player = add([
     area({ shape: new Circle(vec2(0), 455), collisionIgnore: ["door"] }),
     {
         hp: 100,
-        maxHp: 100
+        maxHp: 100,
+        gold: 0,
+        wood: 0,
+        stone: 0,
+        goldTimer: 0,
+        woodTimer: 0,
+        stoneTimer: 0
     },
     body(),
     "player",
@@ -126,6 +133,9 @@ onUpdate(() => {
         const direction = mouseWorld.sub(player.pos);
         player.angle = direction.angle() + 90 + attackOffset;
     }
+    if (player.goldTimer > 0) player.goldTimer -= dt();
+    if (player.woodTimer > 0) player.woodTimer -= dt();
+    if (player.stoneTimer > 0) player.stoneTimer -= dt();
 
 })
 
@@ -204,6 +214,9 @@ onUpdate("gold-miner", (m) => {
 
         if (spinner.angle >= 360) spinner.angle -= 360;
     }
+
+    getResource("gold", 0.1);
+
 });
 
 
@@ -257,6 +270,14 @@ onUpdate(() => {
         }
 
         let isFree = true;
+        const mainBase = get("gold-mine")[0];
+        if (mainBase) {
+            if (vec2(idealX, idealY).dist(mainBase.pos) > 1000) {
+                isFree = false;
+            }
+        } else if (currentBuilding !== "gold-mine") {
+            isFree = false;
+        }
 
         if (!isRectWithinBounds({ x: idealX, y: idealY }, conf.width, conf.height, MAP_SIZE, WORLD_PADDING)) {
             isFree = false;
@@ -306,6 +327,10 @@ onUpdate(() => {
 function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
     if (!structure) return;
+    if (type !== 'gold-mine' && get('gold-mine').length === 0) {
+        alert('Você precisa construir a Gold Mine primeiro!');
+        return;
+    }
 
     let opacityValue = 1;
 
@@ -491,4 +516,50 @@ onKeyPress("space", () => {
 });
 
 
+    const structureMenu = document.getElementById("structure-menu");
+    let selectedStructure = null;
 
+    onMousePress("left", () => {
+        if (structureMenu) structureMenu.style.display = "none";
+
+        if (equippedWeapon && equippedWeapon.is("axe")) {
+            const mPos = toWorld(mousePos());
+            const targets = get("structure").filter(s => s.hasPoint(mPos));
+
+            if (targets.length > 0) {
+                selectedStructure = targets[0];
+
+                const screenPos = toScreen(selectedStructure.pos);
+                structureMenu.style.display = "flex";
+                structureMenu.style.left = `${screenPos.x}px`;
+                structureMenu.style.top = `${screenPos.y}px`;
+
+                isAttacking = true;
+                wait(0.1, () => isAttacking = false);
+                return;
+            }
+        }
+    });
+
+    document.getElementById("delete-btn").addEventListener("click", () => {
+        if (selectedStructure) {
+            if (selectedStructure.gridCells) {
+                freeCells(selectedStructure.gridCells);
+            }
+            destroy(selectedStructure);
+            selectedStructure = null;
+            structureMenu.style.display = "none";
+            document.getElementById("game").focus();
+        }
+    });
+
+    document.getElementById("upgrade-btn").addEventListener("click", () => {
+        if (selectedStructure) {
+            selectedStructure.maxHp *= 1.5;
+            selectedStructure.hp = selectedStructure.maxHp;
+            selectedStructure.scale = selectedStructure.scale.scale(1.1);
+
+            structureMenu.style.display = "none";
+            document.getElementById("game").focus();
+        }
+    });

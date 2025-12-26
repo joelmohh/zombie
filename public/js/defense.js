@@ -89,7 +89,7 @@ function createProjectile(posValue, angle, config) {
 
 function handleBulletHit(bullet, zombie) {
     if (bullet.pType === "explosive" || bullet.pType === "bomb") {
-        const radius = bullet.pType === "bomb" ? 150 : 80; 
+        const radius = bullet.pType === "bomb" ? 100 : 80; 
         createExplosion(bullet.pos, radius, bullet.damage);
     } else {
         damageZombie(zombie, bullet.damage);

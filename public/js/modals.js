@@ -29,13 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     modals.forEach(modal => {
         modal.addEventListener('mousedown', (e) => {
             if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                e.preventDefault(); 
+                e.preventDefault();
             }
             gameCanvas.focus();
         });
 
         const header = modal.querySelector('.modal-header');
-        if (!header) return; 
+        if (!header) return;
 
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            
+
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
 
