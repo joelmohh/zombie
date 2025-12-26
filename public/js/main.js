@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const randomOffset = vec2(rand(-300, 300), rand(-300, 300));
         const spawnPos = player.pos.add(randomOffset);
 
-//        spawnZombie(spawnPos);
+        //        spawnZombie(spawnPos);
 
         document.getElementById("game").focus();
     });
@@ -225,27 +225,32 @@ onUpdate(() => {
         let idealX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
         let idealY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
 
-        const ghostScale = conf.isDefense ? (conf.scale * 3) : conf.scale;
-        const offsetX = (conf.width * ghostScale) / 2;
-        const offsetY = (conf.height * ghostScale) / 2;
-        
+        const hasTurret = conf.isDefense;
+        const baseScale = hasTurret ? (conf.scale * 3) : conf.scale;
+        const baseSprite = hasTurret ? "wall" : conf.sprite;
+
+        const offsetX = (conf.width * baseScale) / 2;
+        const offsetY = (conf.height * baseScale) / 2;
+
         if (!placementGhost) {
             placementGhost = add([
-                sprite(conf.sprite),
-                pos(idealX - offsetX, idealY - offsetY),
+                sprite(baseSprite),
                 opacity(0.5),
-                scale(conf.scale),
-                area({ shape: conf.areaShape }), 
-                z(50), 
+                pos(mouseWorld.x - offsetX, mouseWorld.y - offsetY),
+                body({ isStatic: true }),
+                scale(baseScale),
+                z(50),
                 "ghost"
             ]);
             if (conf.isDefense) {
-                placementGhost.add([
-                    sprite("wall"), 
-                    pos(0, 0),
-                    scale(3), 
-                    opacity(1),
-                    z(-1)
+                building.add([
+                    sprite(conf.sprite),
+                    pos((conf.width + (conf.width * 2) + 70), (conf.height + (conf.height * 2) + 70)),
+                    anchor("center"),
+                    scale(1 / 3),
+                    rotate(0),
+                    z(1),
+                    "turret"
                 ]);
             }
         } else {
@@ -264,7 +269,7 @@ onUpdate(() => {
         let foundSafeSpot = false;
 
         const allObstacles = [
-            ...get("tree"), ...get("rock"), ...get("player"), 
+            ...get("tree"), ...get("rock"), ...get("player"),
             ...get("structure")
         ];
 
@@ -272,11 +277,11 @@ onUpdate(() => {
             const testPos = vec2(idealX + offset.x, idealY + offset.y);
             let isFree = true;
 
-            if (testPos.x < WORLD_PADDING || 
-                testPos.x > MAP_SIZE - WORLD_PADDING || 
-                testPos.y < WORLD_PADDING || 
+            if (testPos.x < WORLD_PADDING ||
+                testPos.x > MAP_SIZE - WORLD_PADDING ||
+                testPos.y < WORLD_PADDING ||
                 testPos.y > MAP_SIZE - WORLD_PADDING) {
-                isFree = false; 
+                isFree = false;
             }
 
             if (isFree) {
@@ -285,15 +290,15 @@ onUpdate(() => {
 
                     if (obj.is("tree") || obj.is("rock") || obj.is("player")) {
                         const ghostRadius = (conf.width * conf.scale) / 2;
-                        const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius) 
-                                          ? obj.area.shape.radius * obj.scale.x 
-                                          : 40; 
+                        const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius)
+                            ? obj.area.shape.radius * obj.scale.x
+                            : 40;
 
                         if (testPos.dist(obj.pos) < (objRadius + ghostRadius)) {
                             isFree = false;
                             break;
                         }
-                    } 
+                    }
                     else {
                         const isStructureA = currentBuilding === "wall" || currentBuilding === "door";
                         const isStructureB = obj.is("wall") || obj.is("door");
@@ -303,9 +308,9 @@ onUpdate(() => {
                                 isFree = false;
                                 break;
                             }
-                        } 
+                        }
                         else {
-                            let objConf = { width: 50, height: 50 }; 
+                            let objConf = { width: 50, height: 50 };
                             if (obj.buildingId && BUILDING_TYPES[obj.buildingId]) {
                                 objConf = BUILDING_TYPES[obj.buildingId];
                             } else if (obj.is("wall")) {
@@ -324,7 +329,7 @@ onUpdate(() => {
                                 isFree = false;
                                 break;
                             }
-                        }                    
+                        }
                     }
                 }
             }
@@ -332,7 +337,7 @@ onUpdate(() => {
             if (isFree) {
                 finalPos = testPos;
                 foundSafeSpot = true;
-                break; 
+                break;
             }
         }
 
@@ -379,7 +384,7 @@ function buildStructure(type, position) {
     const building = add([
         sprite(baseSprite),
         opacity(opacityValue),
-        pos(position.x - offsetX, position.y - offsetY), 
+        pos(position.x - offsetX, position.y - offsetY),
         area(areaConfig),
         body({ isStatic: true }),
         scale(baseScale),
@@ -397,12 +402,13 @@ function buildStructure(type, position) {
 
     if (hasTurret) {
         building.add([
-            sprite(structure.sprite), 
-            pos((structure.width + (structure.width * 2) + 70), (structure.height + (structure.height * 2) + 70)), 
-            anchor("center"), 
-            scale(1 / 3), 
+            sprite(structure.sprite),
+            pos((structure.width + (structure.width * 2) + 70), (structure.height + (structure.height * 2) + 70)),
+            anchor("center"),
+            scale(1 / 3),
             rotate(0),
-            "turret"     
+            z(1),
+            "turret"
         ]);
     }
 }
