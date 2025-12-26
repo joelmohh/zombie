@@ -1,10 +1,20 @@
 import { applyDamage } from "./world.js"; 
+import { isAreaFree } from "./grid.js"; 
+import { MAP_SIZE, GRID_SIZE, WORLD_PADDING } from "./config.js";
 
 const ZOMBIE_SPEED = 50;
-const ZOMBIE_DMG = Math.floor(10 + Math.random() * 10);
+const ZOMBIE_DMG = 10;
 const ATTACK_SPEED = 1.0; 
 const ATTACK_RANGE = 80;  
+
 export function initEnemySystem() {
+    loop(5, () => {
+        const mainBase = get("gold-mine")[0];
+        if (mainBase) {
+            spawnHorde(mainBase.pos);
+        }
+    });
+
     onUpdate("zombie", (z) => {
         if (z.attackTimer === undefined) z.attackTimer = 0;
         if (z.attackTimer > 0) z.attackTimer -= dt();
@@ -17,11 +27,10 @@ export function initEnemySystem() {
                 z.attackTimer = ATTACK_SPEED;
             }
         } else {
-            const goldMine = findNearestGoldMine(z.pos);
+            const goldMine = get("gold-mine")[0];
             const player = get("player")[0];
             
             let moveTarget = null;
-
             if (goldMine) {
                 moveTarget = goldMine.pos;
             } else if (player) {
@@ -34,6 +43,38 @@ export function initEnemySystem() {
             }
         }
     });
+}
+
+function spawnHorde(basePos) {
+    const quantity = 3; 
+    const spawnRadius = 1000;
+
+    for (let i = 0; i < quantity; i++) {
+        let spawned = false;
+        let attempts = 0;
+
+        while (!spawned && attempts < 10) {
+            attempts++;
+            
+            const angle = rand(0, 360);
+            const dist = rand(500, spawnRadius); 
+            const offset = vec2(Math.cos(angle * Math.PI / 180), Math.sin(angle * Math.PI / 180)).scale(dist);
+            const spawnPos = basePos.add(offset);
+
+            if (spawnPos.x < WORLD_PADDING || spawnPos.x > MAP_SIZE - WORLD_PADDING ||
+                spawnPos.y < WORLD_PADDING || spawnPos.y > MAP_SIZE - WORLD_PADDING) {
+                continue;
+            }
+
+            const gx = Math.floor(spawnPos.x / GRID_SIZE);
+            const gy = Math.floor(spawnPos.y / GRID_SIZE);
+
+            if (isAreaFree(gx, gy)) {
+                spawnZombie(spawnPos);
+                spawned = true;
+            }
+        }
+    }
 }
 
 function findTargetInRange(pos, range) {

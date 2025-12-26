@@ -46,17 +46,6 @@ updateLeaderboard();
 initDefense();
 initEnemySystem();
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById("game").addEventListener('click', () => {
-        const randomOffset = vec2(rand(-300, 300), rand(-300, 300));
-        const spawnPos = player.pos.add(randomOffset);
-
-        spawnZombie(spawnPos);
-
-        document.getElementById("game").focus();
-    });
-})
-
 let attackOffset = 0;
 
 
