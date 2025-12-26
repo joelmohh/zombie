@@ -33,6 +33,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, BUILDING_TYPES, WORLD_PADDING } from './config.js';
+import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './grid.js';
 import { loadAllSprites } from './assets.js';
 import { updateLeaderboard } from './leaderboard.js';
 import { initDefense } from './defense.js';
@@ -163,8 +164,6 @@ slots.forEach(slot => {
     })
 })
 
-let healthValue = 1;
-let shieldValue = 100;
 
 export function updateHealth() {
     const healthText = document.getElementById('health-text');
@@ -219,137 +218,79 @@ onUpdate(() => {
             guide.opacity = lerp(guide.opacity, 0.25, dt() * 10);
         });
 
-
         const conf = BUILDING_TYPES[currentBuilding];
         const mouseWorld = toWorld(mousePos());
-        let idealX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
-        let idealY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+        const snapped = snapToGrid(mouseWorld);
+        const idealX = snapped.x;
+        const idealY = snapped.y;
 
         const hasTurret = conf.isDefense;
         const baseScale = hasTurret ? (conf.scale * 3) : conf.scale;
         const baseSprite = hasTurret ? "wall" : conf.sprite;
 
-        const offsetX = (conf.width * baseScale) / 2;
-        const offsetY = (conf.height * baseScale) / 2;
-
         if (!placementGhost) {
             placementGhost = add([
                 sprite(baseSprite),
                 opacity(0.5),
-                pos(mouseWorld.x - offsetX, mouseWorld.y - offsetY),
+                pos(vec2(idealX, idealY)),
+                anchor("center"),
                 body({ isStatic: true }),
                 scale(baseScale),
-                z(50),
+                z(100),
                 "ghost"
             ]);
-            if (conf.isDefense) {
-                building.add([
+            if (hasTurret) {
+                placementGhost.add([
                     sprite(conf.sprite),
-                    pos((conf.width + (conf.width * 2) + 70), (conf.height + (conf.height * 2) + 70)),
+                    pos(0, 0),
                     anchor("center"),
                     scale(1 / 3),
                     rotate(0),
-                    z(1),
+                    opacity(0.5),
+                    z(101),
                     "turret"
                 ]);
             }
         } else {
-            placementGhost.use(sprite(conf.sprite));
-            placementGhost.use(scale(conf.scale));
-            placementGhost.use(area({ shape: conf.areaShape }));
+            placementGhost.pos = vec2(idealX, idealY);
+            placementGhost.scaleTo = baseScale;
         }
 
-        const offsets = [
-            vec2(0, 0),
-            vec2(GRID_SIZE, 0), vec2(-GRID_SIZE, 0), vec2(0, GRID_SIZE), vec2(0, -GRID_SIZE),
-            vec2(GRID_SIZE, GRID_SIZE), vec2(GRID_SIZE, -GRID_SIZE), vec2(-GRID_SIZE, GRID_SIZE), vec2(-GRID_SIZE, -GRID_SIZE)
-        ];
+        let isFree = true;
 
-        let finalPos = vec2(idealX, idealY);
-        let foundSafeSpot = false;
+        if (!isRectWithinBounds({ x: idealX, y: idealY }, conf.width, conf.height, MAP_SIZE, WORLD_PADDING)) {
+            isFree = false;
+        }
 
-        const allObstacles = [
-            ...get("tree"), ...get("rock"), ...get("player"),
-            ...get("structure")
-        ];
+        if (isFree && !isAreaFree({ x: idealX, y: idealY }, conf.width, conf.height)) {
+            isFree = false;
+        }
 
-        for (const offset of offsets) {
-            const testPos = vec2(idealX + offset.x, idealY + offset.y);
-            let isFree = true;
-
-            if (testPos.x < WORLD_PADDING ||
-                testPos.x > MAP_SIZE - WORLD_PADDING ||
-                testPos.y < WORLD_PADDING ||
-                testPos.y > MAP_SIZE - WORLD_PADDING) {
-                isFree = false;
-            }
-
-            if (isFree) {
-                for (const obj of allObstacles) {
-                    if (obj.is("ghost")) continue;
-
-                    if (obj.is("tree") || obj.is("rock") || obj.is("player")) {
-                        const ghostRadius = (conf.width * conf.scale) / 2;
-                        const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius)
-                            ? obj.area.shape.radius * obj.scale.x
-                            : 40;
-
-                        if (testPos.dist(obj.pos) < (objRadius + ghostRadius)) {
-                            isFree = false;
-                            break;
-                        }
-                    }
-                    else {
-                        const isStructureA = currentBuilding === "wall" || currentBuilding === "door";
-                        const isStructureB = obj.is("wall") || obj.is("door");
-
-                        if (isStructureA && isStructureB) {
-                            if (testPos.dist(obj.pos) < 40) {
-                                isFree = false;
-                                break;
-                            }
-                        }
-                        else {
-                            let objConf = { width: 50, height: 50 };
-                            if (obj.buildingId && BUILDING_TYPES[obj.buildingId]) {
-                                objConf = BUILDING_TYPES[obj.buildingId];
-                            } else if (obj.is("wall")) {
-                                objConf = BUILDING_TYPES["wall"];
-                            } else if (obj.is("gold-mine")) {
-                                objConf = BUILDING_TYPES["gold-mine"];
-                            }
-
-                            const minDistanceX = (conf.width + objConf.width) / 2;
-                            const minDistanceY = (conf.height + objConf.height) / 2;
-
-                            const distX = Math.abs(testPos.x - obj.pos.x);
-                            const distY = Math.abs(testPos.y - obj.pos.y);
-
-                            if (distX < minDistanceX && distY < minDistanceY) {
-                                isFree = false;
-                                break;
-                            }
-                        }
-                    }
+        if (isFree) {
+            const allObstacles = [
+                ...get("tree"), ...get("rock"), ...get("player")
+            ];
+            for (const obj of allObstacles) {
+                const ghostHalfW = conf.width / 2;
+                const ghostHalfH = conf.height / 2;
+                const dx = Math.abs(idealX - obj.pos.x);
+                const dy = Math.abs(idealY - obj.pos.y);
+                const objRadius = (obj.area && obj.area.shape && obj.area.shape.radius)
+                    ? obj.area.shape.radius * (obj.scale ? obj.scale.x : 1)
+                    : 40;
+                if (dx < ghostHalfW && dy < ghostHalfH) {
+                    isFree = false;
+                    break;
+                }
+                if (vec2(idealX, idealY).dist(obj.pos) < objRadius + Math.max(ghostHalfW, ghostHalfH)) {
+                    isFree = false;
+                    break;
                 }
             }
-
-            if (isFree) {
-                finalPos = testPos;
-                foundSafeSpot = true;
-                break;
-            }
         }
 
-        placementGhost.pos = vec2(finalPos.x - offsetX, finalPos.y - offsetY);
-        canBuildHere = foundSafeSpot;
-
-        if (foundSafeSpot) {
-            placementGhost.color = rgb(255, 255, 255);
-        } else {
-            placementGhost.pos = vec2(idealX, idealY);
-            placementGhost.color = rgb(255, 100, 100);
-        }
+        canBuildHere = isFree;
+        placementGhost.color = isFree ? rgb(255, 255, 255) : rgb(255, 100, 100);
 
     } else {
         if (placementGhost) {
@@ -366,11 +307,10 @@ function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
     if (!structure) return;
 
-    const areaConfig = { shape: structure.areaShape };
     let opacityValue = 1;
 
     if (type === "door") {
-        areaConfig.collisionIgnore = ["player"];
+        // Allow the player to pass through doors
         opacityValue = 0.5;
     }
 
@@ -378,14 +318,12 @@ function buildStructure(type, position) {
     const baseScale = hasTurret ? (structure.scale * 3) : structure.scale;
     const baseSprite = hasTurret ? "wall" : structure.sprite;
 
-    const offsetX = (structure.width * baseScale) / 2;
-    const offsetY = (structure.height * baseScale) / 2;
-
     const building = add([
         sprite(baseSprite),
         opacity(opacityValue),
-        pos(position.x - offsetX, position.y - offsetY),
-        area(areaConfig),
+        pos(position),
+        anchor("center"),
+        area(type === "door" ? { collisionIgnore: ["player"] } : {}),
         body({ isStatic: true }),
         scale(baseScale),
         z(0),
@@ -403,13 +341,19 @@ function buildStructure(type, position) {
     if (hasTurret) {
         building.add([
             sprite(structure.sprite),
-            pos((structure.width + (structure.width * 2) + 70), (structure.height + (structure.height * 2) + 70)),
+            pos(0, 0),
             anchor("center"),
             scale(1 / 3),
             rotate(0),
             z(1),
             "turret"
         ]);
+    }
+
+    const cells = occupyArea({ x: position.x, y: position.y }, structure.width, structure.height);
+    building.gridCells = cells;
+    if (building.onDestroy) {
+        building.onDestroy(() => freeCells(cells));
     }
 }
 
