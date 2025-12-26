@@ -224,13 +224,16 @@ onUpdate(() => {
         const mouseWorld = toWorld(mousePos());
         let idealX = Math.floor(mouseWorld.x / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
         let idealY = Math.floor(mouseWorld.y / GRID_SIZE) * GRID_SIZE + (GRID_SIZE / 2);
+
+        const ghostScale = conf.isDefense ? (conf.scale * 3) : conf.scale;
+        const offsetX = (conf.width * ghostScale) / 2;
+        const offsetY = (conf.height * ghostScale) / 2;
         
         if (!placementGhost) {
             placementGhost = add([
                 sprite(conf.sprite),
-                pos(idealX, idealY),
+                pos(idealX - offsetX, idealY - offsetY),
                 opacity(0.5),
-                anchor("center"),
                 scale(conf.scale),
                 area({ shape: conf.areaShape }), 
                 z(50), 
@@ -240,7 +243,6 @@ onUpdate(() => {
                 placementGhost.add([
                     sprite("wall"), 
                     pos(0, 0),
-                    anchor("center"),
                     scale(3), 
                     opacity(1),
                     z(-1)
@@ -334,7 +336,7 @@ onUpdate(() => {
             }
         }
 
-        placementGhost.pos = finalPos; 
+        placementGhost.pos = vec2(finalPos.x - offsetX, finalPos.y - offsetY);
         canBuildHere = foundSafeSpot;
 
         if (foundSafeSpot) {
@@ -360,7 +362,7 @@ function buildStructure(type, position) {
     if (!structure) return;
 
     const areaConfig = { shape: structure.areaShape };
-    let opacityValue = 1
+    let opacityValue = 1;
 
     if (type === "door") {
         areaConfig.collisionIgnore = ["player"];
@@ -368,22 +370,22 @@ function buildStructure(type, position) {
     }
 
     const hasTurret = structure.isDefense;
+    const baseScale = hasTurret ? (structure.scale * 3) : structure.scale;
+    const baseSprite = hasTurret ? "wall" : structure.sprite;
 
-    const baseScale = structure.isDefense ? (structure.scale * 3) : structure.scale;
-    const baseSprite = structure.isDefense ? "wall" : structure.sprite;
+    const offsetX = (structure.width * baseScale) / 2;
+    const offsetY = (structure.height * baseScale) / 2;
 
     const building = add([
         sprite(baseSprite),
         opacity(opacityValue),
-        pos(position),
+        pos(position.x - offsetX, position.y - offsetY), 
         area(areaConfig),
         body({ isStatic: true }),
-        anchor("center"),
         scale(baseScale),
         z(0),
         type,
         "structure",
-
         {
             hp: structure.health,
             maxHp: structure.health,
@@ -392,11 +394,12 @@ function buildStructure(type, position) {
         },
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
+
     if (hasTurret) {
         building.add([
             sprite(structure.sprite), 
-            anchor("center"),
-            pos(0, 0),
+            pos((structure.width + (structure.width * 2) + 70), (structure.height + (structure.height * 2) + 70)), 
+            anchor("center"), 
             scale(1 / 3), 
             rotate(0),
             "turret"     
