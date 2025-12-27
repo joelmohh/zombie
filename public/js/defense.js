@@ -1,4 +1,5 @@
-import { BUILDING_TYPES } from "./config.js";
+import { BUILDING_TYPES, LEVEL_COLORS } from "./config.js";
+import { damageZombie } from "./enemy.js";
 
 export function initDefense() {
     const towerTypes = ["tower_archer", "tower_cannon", "tower_bomber", "tower_magic"];
@@ -115,16 +116,37 @@ function createExplosion(posValue, radius, damage) {
     });
 }
 
-function damageZombie(zombie, dmg) {
-    if (zombie.hp) {
-        zombie.hp -= dmg;
-        zombie.color = rgb(255, 0, 0);
-        wait(0.1, () => zombie.color = rgb(255, 255, 255));
+export const MAX_BUILDING_LEVEL = 5;
 
-        if (zombie.hp <= 0) {
-            destroy(zombie);
-        }
-    } else {
-        destroy(zombie);
-    }
+export const weaponState = {
+    sword: { level: 1, baseDamage: 24 },
+    axe: { level: 1, baseDamage: 18 },
+    bow: { level: 1, baseDamage: 16 }
+};
+
+export const potionCatalog = {
+    health: { cost: 45, heal: 60 },
+    shield: { cost: 55, shield: 80 }
+};
+
+export function getLevelColor(level) {
+    return LEVEL_COLORS[Math.min(level, LEVEL_COLORS.length - 1)] || LEVEL_COLORS[1];
+}
+
+export function getWeaponDamage(type) {
+    const data = weaponState[type];
+    if (!data) return 0;
+    const multiplier = 1 + 0.2 * (data.level - 1);
+    return Math.round(data.baseDamage * multiplier);
+}
+
+export function getWeaponUpgradeCost(type) {
+    const state = weaponState[type];
+    if (!state) return 0;
+    return 30 + state.level * 25;
+}
+
+export function applyWeaponTint(weapon, level) {
+    if (!weapon) return;
+    weapon.color = getLevelColor(level).tint;
 }

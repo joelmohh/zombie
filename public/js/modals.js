@@ -28,10 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modals.forEach(modal => {
         modal.addEventListener('mousedown', (e) => {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            const isFormField = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+            if (!isFormField) {
                 e.preventDefault();
+                gameCanvas.focus();
             }
-            gameCanvas.focus();
         });
 
         const header = modal.querySelector('.modal-header');

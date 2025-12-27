@@ -153,17 +153,26 @@ document.addEventListener("DOMContentLoaded", () => {
 export function applyDamage(target, amount) {
     if (target.hp === undefined) return;
 
-    target.hp = Math.max(0, target.hp - amount);
+    let remaining = amount;
 
     if (target.is("player")) {
+        if (target.shield && target.shield > 0) {
+            const absorbed = Math.min(target.shield, remaining);
+            target.shield -= absorbed;
+            remaining -= absorbed;
+        }
+        target.hp = Math.max(0, target.hp - remaining);
         updateHealth();
         if (target.hp <= 0) {
             shake(20);
             target.hp = target.maxHp;
             target.pos = vec2(1000, 1000);
+            target.shield = 0;
             updateHealth();
         }
     } else if (target.is("structure")) {
+        target.hp = Math.max(0, target.hp - remaining);
+
         if (target.hp <= 0) {
             destroy(target);
             return;

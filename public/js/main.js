@@ -33,12 +33,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-import { MAP_SIZE, ZOOM_LEVEL, GRID_SIZE, SPEED, BUILDING_TYPES, WORLD_PADDING } from './config.js';
+import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './config.js';
 import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './grid.js';
 import { loadAllSprites } from './assets.js';
 import { updateLeaderboard } from './leaderboard.js';
-import { initDefense } from './defense.js';
-import { initEnemySystem, spawnZombie } from './enemy.js';
+import { initDefense, applyWeaponTint, getWeaponUpgradeCost, getWeaponDamage, getLevelColor, potionCatalog, weaponState, MAX_BUILDING_LEVEL } from './defense.js';
+import { initEnemySystem, damageZombie } from './enemy.js';
 import { getResource } from './world.js';
 
 loadAllSprites()
@@ -73,9 +73,11 @@ export const player = add([
     {
         hp: 100,
         maxHp: 100,
+        shield: 0,
+        maxShield: 0,
         gold: 0,
         wood: 0,
-        stone: 0,
+        stone: 0,        
         goldTimer: 0,
         woodTimer: 0,
         stoneTimer: 0
@@ -84,6 +86,8 @@ export const player = add([
     "player",
     z(10)
 ]);
+
+refreshResourceUI();
 
 player.add([sprite("hands"), pos(250, -300), anchor("left"), z(9)]);
 player.add([sprite("hands"), pos(-250, -300), anchor("right"), z(9)]);
@@ -102,7 +106,6 @@ onUpdate(() => {
     player.angle = direction.angle() + 90 + attackOffset;
 
     updateMiniMap()
-    //updateHealth()
 
     if (player.pos.x < 0) player.pos.x = 0;
     if (player.pos.y < 0) player.pos.y = 0;
@@ -160,16 +163,47 @@ slots.forEach(slot => {
         } else if (itemType === "bow") {
             equippedWeapon = player.add([sprite("bow"), pos(-500, -700), anchor("left"), scale(1), rotate(0), "weapon", "bow"]);
         }
+
+        
+        if (equippedWeapon && weaponState[itemType]) {
+            equippedWeapon.weaponType = itemType;
+            applyWeaponTint(equippedWeapon, weaponState[itemType].level);
+        }
     })
 })
 
+function getEquippedWeaponType() {
+    if (!equippedWeapon) return null;
+    if (equippedWeapon.weaponType) return equippedWeapon.weaponType;
+    if (equippedWeapon.is("sword")) return "sword";
+    if (equippedWeapon.is("axe")) return "axe";
+    if (equippedWeapon.is("bow")) return "bow";
+    return null;
+}
 
 export function updateHealth() {
     const healthText = document.getElementById('health-text');
     const healthBarFill = document.getElementById('health-bar-fill');
-    healthText.textContent = `Health: ${Math.floor(player.hp) / player.maxHp * 100}%`;
+    const shieldText = document.getElementById('shield-text');
+    const shieldBarFill = document.getElementById('shield-bar-fill');
+    const healthPercent = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
+    const shieldPercent = player.maxShield > 0 ? Math.max(0, Math.min(100, (player.shield / player.maxShield) * 100)) : 0;
+
+    if (healthText) {
+        healthText.textContent = `Health: ${healthPercent.toFixed(0)}%`;
+    }
     if (healthBarFill) {
-        healthBarFill.style.width = `${Math.floor((player.hp / player.maxHp) * 100)}%`;
+        healthBarFill.style.width = `${healthPercent}%`;
+    }
+    if (shieldText) {
+        shieldText.textContent = `Shield: ${shieldPercent.toFixed(0)}%`;
+    }
+    if (shieldBarFill) {
+        shieldBarFill.style.width = `${shieldPercent}%`;
+        const container = shieldBarFill.parentElement;
+        if (container) {
+            container.style.opacity = player.shield > 0 ? 1 : 0.35;
+        }
     }
 }
 export function updateBuildingHealthBar(target) {
@@ -216,6 +250,42 @@ function updateMiniMap() {
     mini.style.top = `${Math.max(0, Math.min(100, pY))}%`;
 }
 
+export function refreshResourceUI() {
+    const goldEl = document.getElementById('gold-amount');
+    const woodEl = document.getElementById('wood-amount');
+    const stoneEl = document.getElementById('stone-amount');
+
+    if (goldEl) goldEl.innerText = player.gold;
+    if (woodEl) woodEl.innerText = player.wood;
+    if (stoneEl) stoneEl.innerText = player.stone;
+}
+
+function hasResources(cost = { wood: 0, stone: 0, gold: 0 }) {
+    const wood = cost.wood || 0;
+    const stone = cost.stone || 0;
+    const gold = cost.gold || 0;
+    return player.wood >= wood && player.stone >= stone && player.gold >= gold;
+}
+
+function spendResources(cost = { wood: 0, stone: 0, gold: 0 }) {
+    player.wood -= cost.wood || 0;
+    player.stone -= cost.stone || 0;
+    player.gold -= cost.gold || 0;
+    refreshResourceUI();
+}
+
+function showFloatingText(message, colorValue = rgb(255, 255, 255)) {
+    add([
+        text(message, { size: 20 }),
+        pos(player.pos.x, player.pos.y - 60),
+        color(colorValue),
+        z(120),
+        opacity(1),
+        lifespan(1, { fade: 0.5 }),
+        move(vec2(0, -1), 50)
+    ]);
+}
+
 // Minner animation
 onUpdate("gold-miner", (m) => {
     const spinner = m.get("turret")[0];
@@ -235,6 +305,18 @@ onUpdate("gold-miner", (m) => {
 let currentBuilding = null;
 let placementGhost = null;
 let canBuildHere = false;
+
+function applyStructureColor(structure) {
+    const level = structure.upgradeLevel || 1;
+    const tint = getLevelColor(level).tint;
+    structure.color = tint;
+    const turret = structure.get ? structure.get("turret")[0] : null;
+    if (turret) turret.color = tint;
+}
+
+function computeStructureHealth(baseHealth, level) {
+    return Math.round(baseHealth * (1 + 0.35 * (level - 1)));
+}
 
 // Ghost Logic
 onUpdate(() => {
@@ -340,9 +422,18 @@ function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
     if (!structure) return;
     if (type !== 'gold-mine' && get('gold-mine').length === 0) {
-        alert('Você precisa construir a Gold Mine primeiro!');
+        alert('You need to build the Gold Mine first!');
         return;
     }
+
+    const cost = structure.cost || { wood: 0, stone: 0, gold: 0 };
+    if (!hasResources(cost)) {
+        showFloatingText(`Insufficient resources: ${cost.wood || 0} wood / ${cost.stone || 0} stone`, rgb(255, 150, 150));
+        return;
+    }
+    refreshResourceUI();
+
+    spendResources(cost);
 
     let opacityValue = 1;
 
@@ -369,8 +460,11 @@ function buildStructure(type, position) {
         {
             hp: structure.health,
             maxHp: structure.health,
+            baseHealth: structure.health,
             buildingId: type,
-            cost: structure.cost
+            cost: structure.cost,
+            upgradeLevel: 1,
+            baseScale: baseScale
         },
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
@@ -392,10 +486,21 @@ function buildStructure(type, position) {
     if (building.onDestroy) {
         building.onDestroy(() => freeCells(cells));
     }
+    applyStructureColor(building);
 }
 
 // Key Bindings
 const constructionSlots = document.querySelectorAll('.construction-action');
+
+const formatCost = (cost = { wood: 0, stone: 0, gold: 0 }) => `Wood: ${cost.wood || 0} | Stone: ${cost.stone || 0}`;
+
+constructionSlots.forEach(slot => {
+    const type = slot.getAttribute('data-id');
+    const conf = BUILDING_TYPES[type];
+    if (conf) {
+        slot.setAttribute('data-tooltip', `${type} - ${formatCost(conf.cost)}`);
+    }
+});
 
 constructionSlots.forEach(slot => {
     slot.addEventListener('click', () => {
@@ -451,6 +556,8 @@ function performAttack() {
         }
     }
 
+    const equippedType = getEquippedWeaponType();
+
     if (isAttacking || !equippedWeapon) return;
 
     // Bow Logic
@@ -458,6 +565,9 @@ function performAttack() {
         if (!canShoot) return;
         canShoot = false;
         wait(FIRE_RATE, () => canShoot = true);
+
+        const arrowDamage = getWeaponDamage("bow");
+        const arrowTint = getLevelColor(weaponState.bow.level).tint;
 
         const mouseWorld = toWorld(mousePos());
         const direction = mouseWorld.sub(player.pos).unit();
@@ -469,6 +579,7 @@ function performAttack() {
             anchor("center"),
             rotate(direction.angle()),
             scale(0.04),
+            color(arrowTint),
             area(),
             move(direction, 1000),
             offscreen({ destroy: true }),
@@ -479,11 +590,16 @@ function performAttack() {
         arrow.onCollide("tree", () => destroy(arrow));
         arrow.onCollide("rock", () => destroy(arrow));
         arrow.onCollide("wall", () => destroy(arrow));
+        arrow.onCollide("zombie", (z) => {
+            damageZombie(z, arrowDamage);
+            destroy(arrow);
+        });
         return;
     }
 
     // Melee Logic
     isAttacking = true;
+    const weaponDamageValue = getWeaponDamage(equippedType);
     const mouseWorld = toWorld(mousePos());
     const direction = mouseWorld.sub(player.pos).unit();
     const hitPos = player.pos.add(direction.scale(50));
@@ -510,6 +626,12 @@ function performAttack() {
     });
     hitbox.onCollide("player", (p) => {
         if (p !== player && equippedWeapon.is("sword")) damage(p);
+    });
+
+    hitbox.onCollide("zombie", (z) => {
+        if (weaponDamageValue > 0) {
+            damageZombie(z, weaponDamageValue);
+        }
     });
 
     wait(0.1, () => destroy(hitbox));
@@ -567,11 +689,144 @@ document.getElementById("delete-btn").addEventListener("click", () => {
 
 document.getElementById("upgrade-btn").addEventListener("click", () => {
     if (selectedStructure) {
-        selectedStructure.maxHp *= 1.5;
+        const currentLevel = selectedStructure.upgradeLevel || 1;
+        if (currentLevel >= MAX_BUILDING_LEVEL) {
+            showFloatingText("Maximum level reached", rgb(255, 215, 0));
+            structureMenu.style.display = "none";
+            document.getElementById("game").focus();
+            return;
+        }
+
+        const nextLevel = currentLevel + 1;
+        selectedStructure.upgradeLevel = nextLevel;
+
+        const baseHealth = selectedStructure.baseHealth || selectedStructure.maxHp || 200;
+        selectedStructure.maxHp = computeStructureHealth(baseHealth, nextLevel);
         selectedStructure.hp = selectedStructure.maxHp;
-        selectedStructure.scale = selectedStructure.scale.scale(1.1);
+
+        if (selectedStructure.scale && selectedStructure.scale.scale) {
+            selectedStructure.scale = selectedStructure.scale.scale(1.03);
+        }
+
+        applyStructureColor(selectedStructure);
+        updateBuildingHealthBar(selectedStructure);
+        showFloatingText(`Upgrade level ${nextLevel} (${getLevelColor(nextLevel).name})`, getLevelColor(nextLevel).tint);
 
         structureMenu.style.display = "none";
         document.getElementById("game").focus();
     }
 });
+
+const weaponLabels = {
+    sword: "Espada",
+    axe: "Machado",
+    bow: "Arco"
+};
+
+function renderShopUI() {
+    document.querySelectorAll('.shop-item[data-weapon]').forEach(btn => {
+        const type = btn.getAttribute('data-weapon');
+        const state = weaponState[type];
+        if (!state) return;
+
+        const colorInfo = getLevelColor(state.level);
+        const levelEl = btn.querySelector('[data-role="level"]');
+        const costEl = btn.querySelector('[data-role="cost"]');
+
+        if (levelEl) levelEl.textContent = `Nível ${state.level} · ${colorInfo.name}`;
+        if (costEl) {
+            if (state.level >= MAX_BUILDING_LEVEL) {
+                costEl.textContent = "Maximum level reached";
+            } else {
+                costEl.textContent = `Next cost: ${getWeaponUpgradeCost(type)} gold`;
+            }
+        }
+
+        btn.style.borderColor = colorInfo.hex;
+    });
+
+    document.querySelectorAll('.shop-item.potion').forEach(btn => {
+        const potionKey = btn.getAttribute('data-potion');
+        const potion = potionCatalog[potionKey];
+        const costEl = btn.querySelector('[data-role="cost"]');
+        if (potion && costEl) {
+            costEl.textContent = `Cost: ${potion.cost} gold`;
+        }
+    });
+}
+
+function purchaseWeaponUpgrade(type) {
+    const state = weaponState[type];
+    if (!state) return;
+    if (state.level >= MAX_BUILDING_LEVEL) {
+        showFloatingText("Weapon at maximum level", getLevelColor(state.level).tint);
+        return;
+    }
+
+    const cost = getWeaponUpgradeCost(type);
+    if (player.gold < cost) {
+        showFloatingText("Insufficient gold", rgb(255, 150, 150));
+        return;
+    }
+
+    player.gold -= cost;
+    refreshResourceUI();
+    state.level += 1;
+
+    if (equippedWeapon && getEquippedWeaponType() === type) {
+        applyWeaponTint(equippedWeapon, state.level);
+    }
+
+    renderShopUI();
+    showFloatingText(`${weaponLabels[type]} level ${state.level}`, getLevelColor(state.level).tint);
+}
+
+function consumePotion(type) {
+    const potion = potionCatalog[type];
+    if (!potion) return;
+
+    if (player.gold < potion.cost) {
+        showFloatingText("Insufficient gold", rgb(255, 150, 150));
+        return;
+    }
+
+    player.gold -= potion.cost;
+    refreshResourceUI();
+
+    if (type === "health") {
+        player.hp = Math.min(player.maxHp, player.hp + potion.heal);
+        showFloatingText(`+${potion.heal} HP`, rgb(144, 238, 144));
+    }
+
+    if (type === "shield") {
+        player.maxShield = Math.max(player.maxShield, potion.shield);
+        player.shield = potion.shield;
+        showFloatingText(`Shield ${potion.shield}`, rgb(135, 206, 235));
+    }
+
+    updateHealth();
+}
+
+renderShopUI();
+
+document.querySelectorAll('.shop-item[data-weapon]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-weapon');
+        purchaseWeaponUpgrade(type);
+    });
+});
+
+document.querySelectorAll('.shop-item.potion').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const potionKey = btn.getAttribute('data-potion');
+        consumePotion(potionKey);
+    });
+});
+/*
+let i = 0;
+while (i < 10000){
+    getResource('gold');
+    getResource('wood');
+    getResource('stone');
+    i++;
+}*/

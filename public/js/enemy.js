@@ -192,3 +192,17 @@ function isOnStructure(pos, radius) {
 function clampValue(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
+
+export function damageZombie(zombie, dmg) {
+    if (zombie.hp) {
+        zombie.hp -= dmg;
+        zombie.color = rgb(255, 0, 0);
+        wait(0.1, () => zombie.color = rgb(255, 255, 255));
+
+        if (zombie.hp <= 0) {
+            destroy(zombie);
+        }
+    } else {
+        destroy(zombie);
+    }
+}

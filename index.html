@@ -115,8 +115,44 @@
             <button class="close-btn">X</button>
         </div>
 
-        <div class="modal-content">
-            <p>Compre itens aqui...</p>
+        <div class="modal-content shop-content">
+            <div class="shop-section">
+                <h4>Weapon Upgrades</h4>
+                <div class="shop-list" id="weapon-upgrade-list">
+                    <button class="shop-item" data-weapon="sword">
+                        <div class="shop-title">Sword</div>
+                        <div class="shop-meta" data-role="level">Level 1 · Gray</div>
+                        <div class="shop-meta" data-role="cost">Next cost: 0 gold</div>
+                    </button>
+                    <button class="shop-item" data-weapon="axe">
+                        <div class="shop-title">Axe</div>
+                        <div class="shop-meta" data-role="level">Level 1 · Gray</div>
+                        <div class="shop-meta" data-role="cost">Next cost: 0 gold</div>
+                    </button>
+                    <button class="shop-item" data-weapon="bow">
+                        <div class="shop-title">Bow</div>
+                        <div class="shop-meta" data-role="level">Level 1 · Gray</div>
+                        <div class="shop-meta" data-role="cost">Next cost: 0 gold</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="shop-section">
+                <h4>Potions</h4>
+                <div class="shop-list" id="potion-list">
+                    <button class="shop-item potion" data-potion="health">
+                        <div class="shop-title">Health Potion</div>
+                        <div class="shop-meta">Restores health immediately</div>
+                        <div class="shop-meta" data-role="cost">Cost: 0 gold</div>
+                    </button>
+                    <button class="shop-item potion" data-potion="shield">
+                        <div class="shop-title">Shield Potion</div>
+                        <div class="shop-meta">Grants shield, it's like extra life</div>
+                        <div class="shop-meta" data-role="cost">Cost: 0 gold</div>
+                    </button>
+                </div>
+            </div>
+            <div class="shop-hint">Level colors follow building upgrades.</div>
         </div>
     </div>
     <div class="modal help">
@@ -129,6 +165,35 @@
             <p>Get help here...</p>
         </div>
     </div>
+    <div class="modal party">
+        <div class="modal-header">
+            <span>PARTY</span>
+            <button class="close-btn">X</button>
+        </div>
+
+        <div class="modal-content party-content">
+            <div class="party-columns">
+                <div class="party-column">
+                    <h4>Your Party</h4>
+                    <ul id="your-party-list" class="party-list">
+                        <li>Empty slot</li>
+                        <li>Empty slot</li>
+                        <li>Empty slot</li>
+                        <li>Empty slot</li>
+                    </ul>
+                </div>
+                <div class="party-column">
+                    <h4>Public Parties</h4>
+                    <ul id="public-party-list" class="party-list">
+                        <li>Alpha Squad · aberto</li>
+                        <li>Builders Only · aberto</li>
+                        <li>Night Watch · fechado</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 </body>
 

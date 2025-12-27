@@ -14,6 +14,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 20 },
         scale: 0.05,
         health: 200,
+        cost: { wood: 15, stone: 5 },
         max: 100,
         commontype: "structure",
     },
@@ -25,6 +26,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 150, h: 150 },
         scale: 0.05,
         health: 500,
+        cost: { wood: 60, stone: 40 },
         max: 1,
         commontype: "structure",
     },
@@ -39,6 +41,7 @@ export const BUILDING_TYPES = {
         max: 8,
         isDefense: true,
         special: "gold-miner",
+        cost: { wood: 30, stone: 20 },
         commontype: "structure",
     },
     "door":{
@@ -49,6 +52,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 20 },
         scale: 0.05,
         health: 200,
+        cost: { wood: 10, stone: 5 },
         max: 100,
         commontype: "structure",
     },
@@ -59,6 +63,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 100 },
         scale: 0.05,
         health: 200,
+        cost: { wood: 40, stone: 40 },
         range: 400,          
         fireRate: 0.8,       
         damage: 50,
@@ -74,6 +79,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 100 },
         scale: 0.05,
         health: 400,
+        cost: { wood: 30, stone: 60 },
         range: 350,
         fireRate: 1,       
         damage: 60,
@@ -89,6 +95,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 100 },
         scale: 0.05,
         health: 300,
+        cost: { wood: 35, stone: 45 },
         range: 500,          
         fireRate: 2.0,       
         damage: 80,
@@ -104,6 +111,7 @@ export const BUILDING_TYPES = {
         hitboxSize: { w: 100, h: 100 },
         scale: 0.05,
         health: 250,
+        cost: { wood: 50, stone: 50 },
         range: 250,          
         fireRate: 1.5,
         damage: 50,          
@@ -120,6 +128,7 @@ export const BUILDING_TYPES = {
         scale: 0.05,
         type: "build_bases",
         commontype: "structure",
+        cost: { wood: 0, stone: 0 },
     }
 };
 
@@ -131,3 +140,13 @@ export const BUTTON_MAPPING = {
     5: "tower_magic", 
     6: "tower_bomber" 
 };
+export const LEVEL_COLORS = [
+    null,
+    { name: "Cinza", tint: "rgb(128, 128, 128)", hex: "#808080" },
+    { name: "Marrom", tint: "rgb(139, 69, 19)", hex: "#8b4513" },
+    { name: "Branco", tint: "rgb(255, 255, 255)", hex: "#ffffff" },
+    { name: "Amarelo", tint: "rgb(255, 215, 0)", hex: "#ffd700" },
+    { name: "Azul", tint: "rgb(70, 130, 180)", hex: "#4682b4" },
+    { name: "Vermelho", tint: "rgb(220, 20, 60)", hex: "#dc143c" },
+    { name: "Verde", tint: "rgb(34, 139, 34)", hex: "#228b22" },
+];
