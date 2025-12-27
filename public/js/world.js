@@ -19,7 +19,7 @@ for (let i = 0; i < TOTAL_ROCKS; i++) {
     WORLD_OBJECTS.push({ x: seededRandom() * MAP_SIZE, y: seededRandom() * MAP_SIZE, type: "rock", id: null });
 }
 
-export function getResource(type, time = 0) {
+export function getResource(type, time = 0, showText) {
     const timerProp = `${type}Timer`;
     if (player[timerProp] === undefined) player[timerProp] = 0;
     if (player[timerProp] > 0) return;
@@ -32,7 +32,7 @@ export function getResource(type, time = 0) {
         displayElement.innerText = player[type];
     }
 
-    if (type !== "gold") {
+    if (showText && type !== "gold") {
         add([
             text(`+1 ${type}`, { size: 24 }),
             pos(player.pos.x, player.pos.y - 50),
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         body({ isStatic: true }),
                         anchor("center"),
                         scale(0.1),
-                        z(0),
+                        z(-10),
                         "tree"
                     ]);
                 } else if (obj.type === "rock") {
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         body({ isStatic: true }),
                         anchor("center"),
                         scale(0.09),
-                        z(0),
+                        z(-10),
                         "rock"
                     ]);
                 }

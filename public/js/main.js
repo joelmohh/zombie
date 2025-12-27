@@ -78,7 +78,7 @@ export const player = add([
         maxShield: 0,
         gold: 0,
         wood: 0,
-        stone: 0,        
+        stone: 0,
         goldTimer: 0,
         woodTimer: 0,
         stoneTimer: 0
@@ -165,7 +165,7 @@ slots.forEach(slot => {
             equippedWeapon = player.add([sprite("bow"), pos(-500, -700), anchor("left"), scale(1), rotate(0), "weapon", "bow"]);
         }
 
-        
+
         if (equippedWeapon && weaponState[itemType]) {
             equippedWeapon.weaponType = itemType;
             applyWeaponTint(equippedWeapon, weaponState[itemType].level);
@@ -309,10 +309,12 @@ let canBuildHere = false;
 
 function applyStructureColor(structure) {
     const level = structure.upgradeLevel || 1;
-    const tint = getLevelColor(level).tint;
-    structure.color = tint;
-    const turret = structure.get ? structure.get("turret")[0] : null;
-    if (turret) turret.color = tint;
+    const colorInfo = getLevelColor(level);
+    structure.color = colorInfo.tint;
+    const turret = structure.get("turret")[0];
+    if (turret) {
+        turret.color = colorInfo.tint;
+    }
 }
 
 function computeStructureHealth(baseHealth, level) {
@@ -361,7 +363,7 @@ onUpdate(() => {
             }
         } else {
             placementGhost.pos = vec2(idealX, idealY);
-            
+
             // Update sprite if building type changed
             if (placementGhost.sprite !== baseSprite) {
                 destroy(placementGhost);
@@ -629,11 +631,23 @@ function performAttack() {
     // Melee Logic
     isAttacking = true;
     const weaponDamageValue = getWeaponDamage(equippedType);
-    const mouseWorld = toWorld(mousePos());
-    const direction = mouseWorld.sub(player.pos).unit();
-    const hitPos = player.pos.add(direction.scale(50));
 
-    const hitbox = add([circle(40), pos(hitPos), area(), opacity(0), "hit"]);
+    const angle = (player.angle - 90) * (Math.PI / 180);
+
+    let weaponReach = 70;
+    if (equippedType === "sword") weaponReach = 120;
+    if (equippedType === "axe") weaponReach = 110;
+
+    const tipX = player.pos.x + Math.cos(angle) * weaponReach;
+    const tipY = player.pos.y + Math.sin(angle) * weaponReach;
+    const hitPos = vec2(tipX, tipY);
+    const hitbox = add([
+        circle(40),
+        pos(hitPos),
+        area(),
+        opacity(0),
+        "hit"
+    ]);
 
     hitbox.onCollide("tree", (t) => {
         if (equippedWeapon.is("axe")) {
@@ -847,11 +861,11 @@ document.querySelectorAll('.shop-item.potion').forEach(btn => {
         consumePotion(potionKey);
     });
 });
-/*
+
 let i = 0;
 while (i < 10000){
-    getResource('gold');
-    getResource('wood');
-    getResource('stone');
+    getResource('gold', 0, false);
+    getResource('wood', 0, false);
+    getResource('stone', 0, false);
     i++;
-}*/
+}
