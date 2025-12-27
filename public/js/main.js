@@ -370,9 +370,7 @@ function buildStructure(type, position) {
             hp: structure.health,
             maxHp: structure.health,
             buildingId: type,
-            cost: structure.cost,
-            width: structure.width,
-            height: structure.height
+            cost: structure.cost
         },
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
