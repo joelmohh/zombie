@@ -151,7 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 export function applyDamage(target, amount) {
-    if (!target.hp) return;
+    if (target.hp === undefined) return;
+
+    target.hp = Math.max(0, target.hp - amount);
 
     if (target.is("player")) {
         updateHealth();
@@ -166,17 +168,15 @@ export function applyDamage(target, amount) {
             destroy(target);
             return;
         }
+
         updateBuildingHealthBar(target);
     }
 
-    target.hp -= amount;
     target.color = rgb(255, 100, 100);
 
     setTimeout(() => {
         if (target.exists()) target.color = rgb(255, 255, 255);
     }, 100);
-
-
 }
 
 document.addEventListener("DOMContentLoaded", () => {

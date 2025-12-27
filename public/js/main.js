@@ -173,16 +173,39 @@ export function updateHealth() {
     }
 }
 export function updateBuildingHealthBar(target) {
-    if (!target.hp) return;
+    if (target.hp === undefined || target.maxHp === undefined) return;
+
+    const existingBars = [
+        ...target.get("building-health-bar-bg"),
+        ...target.get("building-health-bar-fill")
+    ];
+    existingBars.forEach((b) => destroy(b));
+
+    const baseWidth = target.width || 100;
+    const barWidth = Math.max(80, baseWidth);
+    const barHeight = 14;
+    const scaleY = target.scale?.y || 1;
+    const yOffset = -((target.height || 100) * scaleY) / 2 - 20;
 
     target.add([
-        rect(600, 80),
-        pos(0, -target.height * target.scale.y / 2 - 10),
+        rect(barWidth, barHeight),
+        pos(0, yOffset),
         anchor("center"),
         color(0, 0, 0),
         z(100),
         "building-health-bar-bg"
-    ])
+    ]);
+
+    const fillWidth = Math.max(0, (target.hp / target.maxHp) * (barWidth - 4));
+
+    target.add([
+        rect(fillWidth, barHeight - 4),
+        pos(-barWidth / 2 + 2, yOffset),
+        anchor("left"),
+        color(0, 200, 0),
+        z(101),
+        "building-health-bar-fill"
+    ]);
 }
 
 function updateMiniMap() {
@@ -347,7 +370,9 @@ function buildStructure(type, position) {
             hp: structure.health,
             maxHp: structure.health,
             buildingId: type,
-            cost: structure.cost
+            cost: structure.cost,
+            width: structure.width,
+            height: structure.height
         },
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
@@ -505,50 +530,50 @@ onKeyPress("space", () => {
 });
 
 
-    const structureMenu = document.getElementById("structure-menu");
-    let selectedStructure = null;
+const structureMenu = document.getElementById("structure-menu");
+let selectedStructure = null;
 
-    onMousePress("left", () => {
-        if (structureMenu) structureMenu.style.display = "none";
+onMousePress("left", () => {
+    if (structureMenu) structureMenu.style.display = "none";
 
-        if (equippedWeapon && equippedWeapon.is("axe")) {
-            const mPos = toWorld(mousePos());
-            const targets = get("structure").filter(s => s.hasPoint(mPos));
+    if (equippedWeapon && equippedWeapon.is("axe")) {
+        const mPos = toWorld(mousePos());
+        const targets = get("structure").filter(s => s.hasPoint(mPos));
 
-            if (targets.length > 0) {
-                selectedStructure = targets[0];
+        if (targets.length > 0) {
+            selectedStructure = targets[0];
 
-                const screenPos = toScreen(selectedStructure.pos);
-                structureMenu.style.display = "flex";
-                structureMenu.style.left = `${screenPos.x}px`;
-                structureMenu.style.top = `${screenPos.y}px`;
+            const screenPos = toScreen(selectedStructure.pos);
+            structureMenu.style.display = "flex";
+            structureMenu.style.left = `${screenPos.x}px`;
+            structureMenu.style.top = `${screenPos.y}px`;
 
-                isAttacking = true;
-                wait(0.1, () => isAttacking = false);
-                return;
-            }
+            isAttacking = true;
+            wait(0.1, () => isAttacking = false);
+            return;
         }
-    });
+    }
+});
 
-    document.getElementById("delete-btn").addEventListener("click", () => {
-        if (selectedStructure) {
-            if (selectedStructure.gridCells) {
-                freeCells(selectedStructure.gridCells);
-            }
-            destroy(selectedStructure);
-            selectedStructure = null;
-            structureMenu.style.display = "none";
-            document.getElementById("game").focus();
+document.getElementById("delete-btn").addEventListener("click", () => {
+    if (selectedStructure) {
+        if (selectedStructure.gridCells) {
+            freeCells(selectedStructure.gridCells);
         }
-    });
+        destroy(selectedStructure);
+        selectedStructure = null;
+        structureMenu.style.display = "none";
+        document.getElementById("game").focus();
+    }
+});
 
-    document.getElementById("upgrade-btn").addEventListener("click", () => {
-        if (selectedStructure) {
-            selectedStructure.maxHp *= 1.5;
-            selectedStructure.hp = selectedStructure.maxHp;
-            selectedStructure.scale = selectedStructure.scale.scale(1.1);
+document.getElementById("upgrade-btn").addEventListener("click", () => {
+    if (selectedStructure) {
+        selectedStructure.maxHp *= 1.5;
+        selectedStructure.hp = selectedStructure.maxHp;
+        selectedStructure.scale = selectedStructure.scale.scale(1.1);
 
-            structureMenu.style.display = "none";
-            document.getElementById("game").focus();
-        }
-    });
+        structureMenu.style.display = "none";
+        document.getElementById("game").focus();
+    }
+});

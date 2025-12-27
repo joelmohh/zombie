@@ -133,14 +133,62 @@ function performAttack(zombie, target) {
 }
 
 export function spawnZombie(position) {
+    const safePos = findSafeSpawn(position);
+
     add([
         circle(20),
         color(100, 255, 100), 
         anchor("center"),
         area(),
         body(), 
-        pos(position),
+        pos(safePos),
         "zombie",
         { hp: 100, maxHp: 100 }
     ]);
+}
+
+function findSafeSpawn(desiredPos) {
+    const radius = 25;
+    const attempts = 20;
+
+    for (let i = 0; i < attempts; i++) {
+        const offset = vec2(rand(-200, 200), rand(-200, 200));
+        const candidate = vec2(
+            clampValue(desiredPos.x + offset.x, WORLD_PADDING, MAP_SIZE - WORLD_PADDING),
+            clampValue(desiredPos.y + offset.y, WORLD_PADDING, MAP_SIZE - WORLD_PADDING)
+        );
+
+        if (!isOnStructure(candidate, radius)) {
+            return candidate;
+        }
+    }
+
+    return vec2(
+        clampValue(desiredPos.x, WORLD_PADDING, MAP_SIZE - WORLD_PADDING),
+        clampValue(desiredPos.y, WORLD_PADDING, MAP_SIZE - WORLD_PADDING)
+    );
+}
+
+function isOnStructure(pos, radius) {
+    const structures = get("structure");
+
+    for (const s of structures) {
+        const sx = s.pos.x;
+        const sy = s.pos.y;
+        const scaleX = s.scale?.x || 1;
+        const scaleY = s.scale?.y || 1;
+        const halfW = ((s.width || 50) * scaleX) / 2;
+        const halfH = ((s.height || 50) * scaleY) / 2;
+
+        const overlapsX = Math.abs(pos.x - sx) <= halfW + radius;
+        const overlapsY = Math.abs(pos.y - sy) <= halfH + radius;
+
+        if (overlapsX && overlapsY) return true;
+    }
+
+    return false;
+}
+
+function clampValue(value, min, max) {
+    return Math.max(min, Math.min(max, value));
 }
