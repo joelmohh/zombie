@@ -40,6 +40,7 @@ import { updateLeaderboard } from './leaderboard.js';
 import { initDefense, applyWeaponTint, getWeaponUpgradeCost, getWeaponDamage, getLevelColor, potionCatalog, weaponState, MAX_BUILDING_LEVEL } from './defense.js';
 import { initEnemySystem, damageZombie } from './enemy.js';
 import { getResource } from './world.js';
+import { showToast, ToastType } from './toast.js';
 
 loadAllSprites()
 updateLeaderboard();
@@ -360,7 +361,35 @@ onUpdate(() => {
             }
         } else {
             placementGhost.pos = vec2(idealX, idealY);
-            placementGhost.scaleTo = baseScale;
+            
+            // Update sprite if building type changed
+            if (placementGhost.sprite !== baseSprite) {
+                destroy(placementGhost);
+                placementGhost = add([
+                    sprite(baseSprite),
+                    opacity(0.5),
+                    pos(vec2(idealX, idealY)),
+                    anchor("center"),
+                    body({ isStatic: true }),
+                    scale(baseScale),
+                    z(100),
+                    "ghost"
+                ]);
+                if (hasTurret) {
+                    placementGhost.add([
+                        sprite(conf.sprite),
+                        pos(0, 0),
+                        anchor("center"),
+                        scale(1 / 3),
+                        rotate(0),
+                        opacity(0.5),
+                        z(101),
+                        "turret"
+                    ]);
+                }
+            } else {
+                placementGhost.scaleTo = baseScale;
+            }
         }
 
         let isFree = true;
@@ -422,13 +451,13 @@ function buildStructure(type, position) {
     const structure = BUILDING_TYPES[type];
     if (!structure) return;
     if (type !== 'gold-mine' && get('gold-mine').length === 0) {
-        alert('You need to build the Gold Mine first!');
+        showToast('You need to build the Gold Mine first!', 3000, ToastType.WARNING);
         return;
     }
 
     const cost = structure.cost || { wood: 0, stone: 0, gold: 0 };
     if (!hasResources(cost)) {
-        showFloatingText(`Insufficient resources: ${cost.wood || 0} wood / ${cost.stone || 0} stone`, rgb(255, 150, 150));
+        showToast(`Insufficient resources: ${cost.wood || 0} wood / ${cost.stone || 0} stone`, 3000, ToastType.ERROR);
         return;
     }
     refreshResourceUI();
@@ -704,13 +733,9 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
         selectedStructure.maxHp = computeStructureHealth(baseHealth, nextLevel);
         selectedStructure.hp = selectedStructure.maxHp;
 
-        if (selectedStructure.scale && selectedStructure.scale.scale) {
-            selectedStructure.scale = selectedStructure.scale.scale(1.03);
-        }
-
         applyStructureColor(selectedStructure);
         updateBuildingHealthBar(selectedStructure);
-        showFloatingText(`Upgrade level ${nextLevel} (${getLevelColor(nextLevel).name})`, getLevelColor(nextLevel).tint);
+        showToast(`Upgrade level ${nextLevel} - ${getLevelColor(nextLevel).name}`, 2000, ToastType.SUCCESS);
 
         structureMenu.style.display = "none";
         document.getElementById("game").focus();
@@ -765,7 +790,7 @@ function purchaseWeaponUpgrade(type) {
 
     const cost = getWeaponUpgradeCost(type);
     if (player.gold < cost) {
-        showFloatingText("Insufficient gold", rgb(255, 150, 150));
+        showToast("Insufficient gold", 2000, ToastType.ERROR);
         return;
     }
 
@@ -786,7 +811,7 @@ function consumePotion(type) {
     if (!potion) return;
 
     if (player.gold < potion.cost) {
-        showFloatingText("Insufficient gold", rgb(255, 150, 150));
+        showToast("Insufficient gold", 2000, ToastType.ERROR);
         return;
     }
 

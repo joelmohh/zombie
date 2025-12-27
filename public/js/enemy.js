@@ -53,7 +53,7 @@ function spawnHorde(basePos) {
         let spawned = false;
         let attempts = 0;
 
-        while (!spawned && attempts < 10) {
+        while (!spawned && attempts < 20) {
             attempts++;
             
             const angle = rand(0, 360);
@@ -66,15 +66,22 @@ function spawnHorde(basePos) {
                 continue;
             }
 
-            const gx = Math.floor(spawnPos.x / GRID_SIZE);
-            const gy = Math.floor(spawnPos.y / GRID_SIZE);
-
-            if (isAreaFree(gx, gy)) {
+            if (!isNearStructure(spawnPos, 100)) {
                 spawnZombie(spawnPos);
                 spawned = true;
             }
         }
     }
+}
+
+function isNearStructure(pos, minDist) {
+    const structures = get("structure");
+    for (const s of structures) {
+        if (pos.dist(s.pos) < minDist) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function findTargetInRange(pos, range) {
@@ -148,37 +155,40 @@ export function spawnZombie(position) {
 }
 
 function findSafeSpawn(desiredPos) {
-    const radius = 25;
-    const attempts = 20;
+    const radius = 30;
+    const attempts = 30;
 
     for (let i = 0; i < attempts; i++) {
-        const offset = vec2(rand(-200, 200), rand(-200, 200));
+        const offset = vec2(rand(-300, 300), rand(-300, 300));
         const candidate = vec2(
-            clampValue(desiredPos.x + offset.x, WORLD_PADDING, MAP_SIZE - WORLD_PADDING),
-            clampValue(desiredPos.y + offset.y, WORLD_PADDING, MAP_SIZE - WORLD_PADDING)
+            clampValue(desiredPos.x + offset.x, WORLD_PADDING + 50, MAP_SIZE - WORLD_PADDING - 50),
+            clampValue(desiredPos.y + offset.y, WORLD_PADDING + 50, MAP_SIZE - WORLD_PADDING - 50)
         );
 
-        if (!isOnStructure(candidate, radius)) {
+        if (!isOnStructure(candidate, radius + 20)) {
             return candidate;
         }
     }
 
-    return vec2(
-        clampValue(desiredPos.x, WORLD_PADDING, MAP_SIZE - WORLD_PADDING),
-        clampValue(desiredPos.y, WORLD_PADDING, MAP_SIZE - WORLD_PADDING)
+    const fallback = vec2(
+        rand(WORLD_PADDING + 100, MAP_SIZE - WORLD_PADDING - 100),
+        rand(WORLD_PADDING + 100, MAP_SIZE - WORLD_PADDING - 100)
     );
+    
+    return !isOnStructure(fallback, radius) ? fallback : desiredPos;
 }
 
 function isOnStructure(pos, radius) {
     const structures = get("structure");
+    const safetyMargin = 30;
 
     for (const s of structures) {
         const sx = s.pos.x;
         const sy = s.pos.y;
         const scaleX = s.scale?.x || 1;
         const scaleY = s.scale?.y || 1;
-        const halfW = ((s.width || 50) * scaleX) / 2;
-        const halfH = ((s.height || 50) * scaleY) / 2;
+        const halfW = ((s.width || 50) * scaleX) / 2 + safetyMargin;
+        const halfH = ((s.height || 50) * scaleY) / 2 + safetyMargin;
 
         const overlapsX = Math.abs(pos.x - sx) <= halfW + radius;
         const overlapsY = Math.abs(pos.y - sy) <= halfH + radius;
