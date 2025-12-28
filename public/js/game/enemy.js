@@ -1,11 +1,12 @@
 import { applyDamage } from "./world.js"; 
-import { isAreaFree } from "./grid.js"; 
-import { MAP_SIZE, GRID_SIZE, WORLD_PADDING } from "./config.js";
+import { isAreaFree } from "../utils/grid.js"; 
+import { MAP_SIZE, GRID_SIZE, WORLD_PADDING } from "../utils/config.js";
 
 const ZOMBIE_SPEED = 50;
 const ZOMBIE_DMG = 10;
 const ATTACK_SPEED = 1.0; 
-const ATTACK_RANGE = 80;  
+const ATTACK_RANGE = 80;  // Real attack distance
+const DETECTION_RANGE = 200;  // Detection distance for large structures  
 
 export function initEnemySystem() {
     loop(5, () => {
@@ -46,7 +47,7 @@ export function initEnemySystem() {
 }
 
 function spawnHorde(basePos) {
-    const quantity = 100; 
+    const quantity = 15; 
     const spawnRadius = 1000;
 
     for (let i = 0; i < quantity; i++) {
@@ -92,14 +93,19 @@ function findTargetInRange(pos, range) {
 
     const structures = get("structure");
     let nearest = null;
-    let minDist = range;
+    let minDist = Infinity;
 
     for (const s of structures) {
         const d = pos.dist(s.pos);
         
-        const effectiveRange = range + (s.width ? s.width * s.scale.x / 2 : 20);
-
-        if (d <= effectiveRange) {
+        // Check if structure is large (gold-mine, gold-miner)
+        const isLargeStructure = s.width >= 100;
+        
+        // For large structures, need to account for their size
+        const structureRadius = isLargeStructure ? (s.width * (s.scale?.x || 0.05)) / 2 : 25;
+        
+        // Zombie can attack if within range + structure radius
+        if (d <= range + structureRadius) {
             if (d < minDist) {
                 minDist = d;
                 nearest = s;

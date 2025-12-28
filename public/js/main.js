@@ -33,21 +33,23 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './config.js';
-import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './grid.js';
-import { loadAllSprites } from './assets.js';
-import { updateLeaderboard } from './leaderboard.js';
-import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, potionCatalog, weaponState, MAX_BUILDING_LEVEL, getLevelSpriteName, getWeaponSprite } from './defense.js';
-import { initEnemySystem, damageZombie } from './enemy.js';
-import { getResource } from './world.js';
-import { showToast, ToastType } from './toast.js';
+import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './utils/config.js';
+import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './utils/grid.js';
+import { loadAllSprites } from './utils/assets.js';
+import { updateLeaderboard } from './ui/leaderboard.js';
+import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, potionCatalog, weaponState, MAX_BUILDING_LEVEL, getLevelSpriteName, getWeaponSprite } from './game/defense.js';
+import { initEnemySystem, damageZombie } from './game/enemy.js';
+import { getResource } from './game/world.js';
+import { showToast, ToastType } from './ui/toast.js';
+import { initPlayer, updatePlayerMovement, setupPlayerControls, player as gamePlayer, getAttackOffset, setAttackOffset } from './game/player.js';
+import { updateHealth, updateBuildingHealthBar } from './ui/healthbars.js';
+import { refreshResourceUI, hasResources, spendResources, showFloatingText } from './ui/resources.js';
+import { setupBuildingHotkeys, BUILDING_HOTKEYS } from './utils/hotkeys.js';
 
 loadAllSprites()
 updateLeaderboard();
 initDefense();
 initEnemySystem();
-
-let attackOffset = 0;
 
 
 // Focus on canvas
@@ -63,55 +65,16 @@ window.addEventListener("mousedown", (e) => {
 /  PLAYER SETUP
 */
 
-export const player = add([
-    sprite("player"),
-    scale(0.05),
-    pos(center()),
-    color(255, 255, 0),
-    anchor("center"),
-    rotate(0),
-    area({ shape: new Circle(vec2(0), 900), collisionIgnore: ["door"] }),
-    {
-        hp: 100,
-        maxHp: 100,
-        shield: 0,
-        maxShield: 0,
-        gold: 0,
-        wood: 0,
-        stone: 0,
-        goldTimer: 0,
-        woodTimer: 0,
-        stoneTimer: 0
-    },
-    body(),
-    "player",
-    z(10)
-]);
-
-refreshResourceUI();
-
-player.add([sprite("hands"), scale(1), pos(800, -300), anchor("center"), z(9)]);
-player.add([sprite("hands"), scale(1), pos(-800, -300), anchor("center"), z(9)]);
-
-setCamScale(ZOOM_LEVEL);
+export const player = initPlayer();
+setupPlayerControls();
 
 // UPDATE LOOP
 onUpdate(() => {
-    const currentCam = getCamPos();
-    if (currentCam.dist(player.pos) > 1) {
-        setCamPos(player.pos);
-    }
+    updatePlayerMovement();
 
     const mouseWorld = toWorld(mousePos());
     const direction = mouseWorld.sub(player.pos)
-    player.angle = direction.angle() + 90 + attackOffset;
-
-    updateMiniMap()
-
-    if (player.pos.x < 0) player.pos.x = 0;
-    if (player.pos.y < 0) player.pos.y = 0;
-    if (player.pos.x > MAP_SIZE) player.pos.x = MAP_SIZE;
-    if (player.pos.y > MAP_SIZE) player.pos.y = MAP_SIZE;
+    player.angle = direction.angle() + 90 + getAttackOffset();
 
     if (isAutoAttacking) {
         if (!isAttacking && equippedWeapon) {
@@ -124,20 +87,8 @@ onUpdate(() => {
     if (!isHoveringUI) {
         const mouseWorld = toWorld(mousePos());
         const direction = mouseWorld.sub(player.pos);
-        player.angle = direction.angle() + 90 + attackOffset;
+        player.angle = direction.angle() + 90 + getAttackOffset();
     }
-    if (player.goldTimer > 0) player.goldTimer -= dt();
-    if (player.woodTimer > 0) player.woodTimer -= dt();
-    if (player.stoneTimer > 0) player.stoneTimer -= dt();
-
-    // Regenerate building health slowly
-    get("structure").forEach(building => {
-        if (building.hp < building.maxHp) {
-            building.hp = Math.min(building.maxHp, building.hp + (building.maxHp * 0.01 * dt()));
-            updateBuildingHealthBar(building);
-        }
-    });
-
 })
 
 onKeyDown('w', () => player.move(0, -SPEED));
@@ -162,10 +113,6 @@ function updatePotionUI() {
         if (potionInventory.health > 0) {
             healthSlot.setAttribute('data-type', 'Health');
             healthSlot.setAttribute('data-count', potionInventory.health);
-            healthSlot.style.display = 'flex';
-        } else {
-            healthSlot.style.display = 'none';
-        }
     }
     
     if (shieldSlot) {
@@ -177,6 +124,7 @@ function updatePotionUI() {
             shieldSlot.style.display = 'none';
         }
     }
+}
 }
 
 updatePotionUI();
@@ -256,118 +204,6 @@ function getEquippedWeaponType() {
     if (equippedWeapon.is("axe")) return "axe";
     if (equippedWeapon.is("bow")) return "bow";
     return null;
-}
-
-export function updateHealth() {
-    const healthText = document.getElementById('health-text');
-    const healthBarFill = document.getElementById('health-bar-fill');
-    const shieldText = document.getElementById('shield-text');
-    const shieldBarFill = document.getElementById('shield-bar-fill');
-    const healthPercent = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
-    const shieldPercent = player.maxShield > 0 ? Math.max(0, Math.min(100, (player.shield / player.maxShield) * 100)) : 0;
-
-    if (healthText) {
-        healthText.textContent = `Health: ${healthPercent.toFixed(0)}%`;
-    }
-    if (healthBarFill) {
-        healthBarFill.style.width = `${healthPercent}%`;
-    }
-    if (shieldText) {
-        shieldText.textContent = `Shield: ${shieldPercent.toFixed(0)}%`;
-    }
-    if (shieldBarFill) {
-        shieldBarFill.style.width = `${shieldPercent}%`;
-        const container = shieldBarFill.parentElement;
-        if (container) {
-            container.style.opacity = player.shield > 0 ? 1 : 0.35;
-        }
-    }
-}
-export function updateBuildingHealthBar(target) {
-    if (target.hp === undefined || target.maxHp === undefined) return;
-
-    const existingBars = [
-        ...target.get("building-health-bar-bg"),
-        ...target.get("building-health-bar-fill")
-    ];
-    existingBars.forEach((b) => destroy(b));
-
-    // Don't show health bar if at full health
-    if (target.hp >= target.maxHp) return;
-
-    const baseWidth = target.width || 100;
-    const barWidth = Math.max(100, baseWidth * 1.2);
-    const barHeight = 30; // Increased for better visibility
-    const scaleY = target.scale?.y || 1;
-    const yOffset = -((target.height || 100) * scaleY) / 2 - 35;
-
-    target.add([
-        rect(barWidth, barHeight),
-        pos(0, yOffset),
-        anchor("center"),
-        color(0, 0, 0),
-        z(100),
-        "building-health-bar-bg"
-    ]);
-
-    const fillWidth = Math.max(0, (target.hp / target.maxHp) * (barWidth - 8));
-    const healthPercent = target.hp / target.maxHp;
-    let barColor = rgb(0, 200, 0); // Green
-    if (healthPercent < 0.3) barColor = rgb(200, 0, 0); // Red
-    else if (healthPercent < 0.6) barColor = rgb(255, 165, 0); // Orange
-
-    target.add([
-        rect(fillWidth, barHeight - 8),
-        pos(-barWidth / 2 + 4, yOffset),
-        anchor("left"),
-        color(barColor),
-        z(101),
-        "building-health-bar-fill"
-    ]);
-}
-
-function updateMiniMap() {
-    const mini = document.getElementById('minimap-player');
-    const pX = (player.pos.x / MAP_SIZE) * 100;
-    const pY = (player.pos.y / MAP_SIZE) * 100;
-    mini.style.left = `${Math.max(0, Math.min(100, pX))}%`;
-    mini.style.top = `${Math.max(0, Math.min(100, pY))}%`;
-}
-
-export function refreshResourceUI() {
-    const goldEl = document.getElementById('gold-amount');
-    const woodEl = document.getElementById('wood-amount');
-    const stoneEl = document.getElementById('stone-amount');
-
-    if (goldEl) goldEl.innerText = player.gold;
-    if (woodEl) woodEl.innerText = player.wood;
-    if (stoneEl) stoneEl.innerText = player.stone;
-}
-
-function hasResources(cost = { wood: 0, stone: 0, gold: 0 }) {
-    const wood = cost.wood || 0;
-    const stone = cost.stone || 0;
-    const gold = cost.gold || 0;
-    return player.wood >= wood && player.stone >= stone && player.gold >= gold;
-}
-
-function spendResources(cost = { wood: 0, stone: 0, gold: 0 }) {
-    player.wood -= cost.wood || 0;
-    player.stone -= cost.stone || 0;
-    player.gold -= cost.gold || 0;
-    refreshResourceUI();
-}
-
-function showFloatingText(message, colorValue = rgb(255, 255, 255)) {
-    add([
-        text(message, { size: 20 }),
-        pos(player.pos.x, player.pos.y - 60),
-        color(colorValue),
-        z(120),
-        opacity(1),
-        lifespan(1, { fade: 0.5 }),
-        move(vec2(0, -1), 50)
-    ]);
 }
 
 // Minner animation
@@ -627,35 +463,49 @@ constructionSlots.forEach(slot => {
     }
 });
 
+// Function to select a building type
+function selectBuilding(type) {
+    if (!BUILDING_TYPES[type]) {
+        console.warn(`Type "${type}" not defined in config.js`);
+        return;
+    }
+
+    // If already selected, deselect
+    if (currentBuilding === type) {
+        currentBuilding = null;
+        constructionSlots.forEach(s => s.style.border = '2px solid white');
+        return;
+    }
+
+    currentBuilding = type;
+    console.log("Build Mode:", type);
+
+    // Clear all selections
+    document.querySelectorAll('.inventory .slot').forEach(s => s.style.border = '2px solid white');
+    constructionSlots.forEach(s => s.style.border = '2px solid white');
+
+    // Highlight the selected building slot
+    const selectedSlot = document.querySelector(`.construction-action[data-id="${type}"]`);
+    if (selectedSlot) {
+        selectedSlot.style.border = '2px solid yellow';
+    }
+
+    // Unequip weapon
+    if (equippedWeapon) {
+        destroy(equippedWeapon);
+        equippedWeapon = null;
+    }
+
+    setTimeout(() => document.getElementById("game").focus(), 10);
+}
+
+// Setup hotkeys for building selection (1-8)
+setupBuildingHotkeys(selectBuilding);
+
 constructionSlots.forEach(slot => {
     slot.addEventListener('click', () => {
         const type = slot.getAttribute('data-id');
-
-        if (!BUILDING_TYPES[type]) {
-            console.warn(`Type "${type}" not defined in config.js`);
-            return;
-        }
-
-        if (currentBuilding === type) {
-            currentBuilding = null;
-            slot.style.border = '2px solid white';
-            return;
-        }
-
-        currentBuilding = type;
-        console.log("Modo: CONSTRUÇÃO", type);
-
-        document.querySelectorAll('.inventory .slot').forEach(s => s.style.border = '2px solid white');
-        constructionSlots.forEach(s => s.style.border = '2px solid white');
-
-        slot.style.border = '2px solid yellow';
-
-        if (equippedWeapon) {
-            destroy(equippedWeapon);
-            equippedWeapon = null;
-        }
-
-        setTimeout(() => document.getElementById("game").focus(), 10);
+        selectBuilding(type);
     });
 });
 
@@ -771,8 +621,8 @@ function performAttack() {
 
     wait(0.1, () => destroy(hitbox));
 
-    tween(0, -50, 0.15, (val) => attackOffset = val, easings.easeOutBack)
-        .then(() => tween(-50, 0, 0.25, (val) => attackOffset = val, easings.easeInOutSine))
+    tween(0, -50, 0.15, (val) => setAttackOffset(val), easings.easeOutBack)
+        .then(() => tween(-50, 0, 0.25, (val) => setAttackOffset(val), easings.easeInOutSine))
         .then(() => {
             wait(0.3, () => isAttacking = false);
         });
@@ -1031,11 +881,3 @@ document.querySelectorAll('.shop-item.potion').forEach(btn => {
         consumePotion(potionKey);
     });
 });
-
-let i = 0;
-while (i < 10000){
-    getResource('gold', 0, false);
-    getResource('wood', 0, false);
-    getResource('stone', 0, false);
-    i++;
-}

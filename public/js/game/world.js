@@ -1,5 +1,6 @@
-import { MAP_SIZE, THICKNESS, GRID_SIZE, WORLD_PADDING } from "./config.js";
-import { player, updateHealth, updateBuildingHealthBar } from "./main.js";
+import { MAP_SIZE, THICKNESS, GRID_SIZE, WORLD_PADDING } from "../utils/config.js";
+import { player } from "../main.js";
+import { updateHealth, updateBuildingHealthBar } from "../ui/healthbars.js";
 
 const WORLD_SEED = 12345;
 const TOTAL_TREES = 40;

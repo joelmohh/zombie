@@ -1,7 +1,7 @@
 export const MAP_SIZE = 10000;
 export const GRID_SIZE = 50;
 export const ZOOM_LEVEL = 0.6;
-export const SPEED = 500;
+export const SPEED = 300;
 export const THICKNESS = 0;
 export const WORLD_PADDING = 250;
 

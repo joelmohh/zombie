@@ -1,4 +1,4 @@
-import { BUILDING_TYPES } from "./config.js";
+import { BUILDING_TYPES } from "../utils/config.js";
 import { damageZombie } from "./enemy.js";
 
 export function initDefense() {
@@ -67,8 +67,16 @@ function shoot(tower, type, targetPos, config, explicitAngle) {
 
 function createProjectile(posValue, angle, config) {
     let speed = 600;
-    if (config.type === "explosive") speed = 400; 
-    if (config.type === "bomb") speed = 300;      
+    let lifetime = 3; // 3 seconds max
+    
+    if (config.type === "explosive") {
+        speed = 400;
+        lifetime = 2.5;
+    }
+    if (config.type === "bomb") {
+        speed = 300;
+        lifetime = 3;
+    }
 
     add([
         sprite(config.bulletSprite || "swordLevel1"), 
@@ -78,6 +86,7 @@ function createProjectile(posValue, angle, config) {
         rotate(angle),
         area(),
         move(angle, speed),
+        lifespan(lifetime, { fade: 0.2 }),
         offscreen({ destroy: true }),
         "projectile", 
         { 
