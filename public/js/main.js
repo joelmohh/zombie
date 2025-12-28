@@ -130,6 +130,14 @@ onUpdate(() => {
     if (player.woodTimer > 0) player.woodTimer -= dt();
     if (player.stoneTimer > 0) player.stoneTimer -= dt();
 
+    // Regenerate building health slowly
+    get("structure").forEach(building => {
+        if (building.hp < building.maxHp) {
+            building.hp = Math.min(building.maxHp, building.hp + (building.maxHp * 0.01 * dt()));
+            updateBuildingHealthBar(building);
+        }
+    });
+
 })
 
 onKeyDown('w', () => player.move(0, -SPEED));
@@ -284,11 +292,14 @@ export function updateBuildingHealthBar(target) {
     ];
     existingBars.forEach((b) => destroy(b));
 
+    // Don't show health bar if at full health
+    if (target.hp >= target.maxHp) return;
+
     const baseWidth = target.width || 100;
-    const barWidth = Math.max(80, baseWidth);
-    const barHeight = 14;
+    const barWidth = Math.max(100, baseWidth * 1.2);
+    const barHeight = 30; // Increased for better visibility
     const scaleY = target.scale?.y || 1;
-    const yOffset = -((target.height || 100) * scaleY) / 2 - 20;
+    const yOffset = -((target.height || 100) * scaleY) / 2 - 35;
 
     target.add([
         rect(barWidth, barHeight),
@@ -299,13 +310,17 @@ export function updateBuildingHealthBar(target) {
         "building-health-bar-bg"
     ]);
 
-    const fillWidth = Math.max(0, (target.hp / target.maxHp) * (barWidth - 4));
+    const fillWidth = Math.max(0, (target.hp / target.maxHp) * (barWidth - 8));
+    const healthPercent = target.hp / target.maxHp;
+    let barColor = rgb(0, 200, 0); // Green
+    if (healthPercent < 0.3) barColor = rgb(200, 0, 0); // Red
+    else if (healthPercent < 0.6) barColor = rgb(255, 165, 0); // Orange
 
     target.add([
-        rect(fillWidth, barHeight - 4),
-        pos(-barWidth / 2 + 2, yOffset),
+        rect(fillWidth, barHeight - 8),
+        pos(-barWidth / 2 + 4, yOffset),
         anchor("left"),
-        color(0, 200, 0),
+        color(barColor),
         z(101),
         "building-health-bar-fill"
     ]);

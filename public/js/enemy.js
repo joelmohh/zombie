@@ -46,7 +46,7 @@ export function initEnemySystem() {
 }
 
 function spawnHorde(basePos) {
-    const quantity = 3; 
+    const quantity = 100; 
     const spawnRadius = 1000;
 
     for (let i = 0; i < quantity; i++) {
@@ -136,13 +136,16 @@ function performAttack(zombie, target) {
         if (zombie.exists()) zombie.pos = originalPos;
     }, 100);
 
-    applyDamage(target, ZOMBIE_DMG);
+    // Apply damage to target
+    if (target && target.exists()) {
+        applyDamage(target, ZOMBIE_DMG);
+    }
 }
 
 export function spawnZombie(position) {
     const safePos = findSafeSpawn(position);
 
-    add([
+    const zombie = add([
         circle(20),
         color(150, 50, 50), 
         anchor("center"),
@@ -151,6 +154,28 @@ export function spawnZombie(position) {
         pos(safePos),
         "zombie",
         { hp: 100, maxHp: 100 }
+    ]);
+
+    // Health bar background (hidden initially)
+    zombie.add([
+        rect(40, 6),
+        pos(0, -30),
+        anchor("center"),
+        color(0, 0, 0),
+        opacity(0),
+        z(100),
+        "zombie-health-bg"
+    ]);
+
+    // Health bar fill (hidden initially)
+    zombie.add([
+        rect(36, 4),
+        pos(-18, -30),
+        anchor("left"),
+        color(255, 50, 50),
+        opacity(0),
+        z(101),
+        "zombie-health-fill"
     ]);
 }
 
@@ -208,6 +233,17 @@ export function damageZombie(zombie, dmg) {
         zombie.hp -= dmg;
         zombie.color = rgb(255, 100, 100);
         wait(0.1, () => zombie.color = rgb(150, 50, 50));
+
+        // Show and update health bar
+        const healthBg = zombie.get("zombie-health-bg")[0];
+        const healthFill = zombie.get("zombie-health-fill")[0];
+        
+        if (healthBg && healthFill) {
+            healthBg.opacity = 1;
+            healthFill.opacity = 1;
+            const healthPercent = Math.max(0, zombie.hp / zombie.maxHp);
+            healthFill.width = 36 * healthPercent;
+        }
 
         if (zombie.hp <= 0) {
             destroy(zombie);
