@@ -65,7 +65,7 @@ window.addEventListener("mousedown", (e) => {
 
 export const player = add([
     sprite("player"),
-    scale(0.1),
+    scale(0.05),
     pos(center()),
     color(255, 255, 0),
     anchor("center"),
@@ -90,8 +90,8 @@ export const player = add([
 
 refreshResourceUI();
 
-player.add([sprite("hands"), pos(250, -300), anchor("left"), z(9)]);
-player.add([sprite("hands"), pos(-250, -300), anchor("right"), z(9)]);
+player.add([sprite("hands"), scale(1), pos(250, -300), anchor("left"), z(9)]);
+player.add([sprite("hands"), scale(1), pos(-250, -300), anchor("right"), z(9)]);
 
 setCamScale(ZOOM_LEVEL);
 
