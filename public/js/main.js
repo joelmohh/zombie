@@ -70,7 +70,7 @@ export const player = add([
     color(255, 255, 0),
     anchor("center"),
     rotate(0),
-    area({ shape: new Circle(vec2(0), 455), collisionIgnore: ["door"] }),
+    area({ shape: new Circle(vec2(0), 900), collisionIgnore: ["door"] }),
     {
         hp: 100,
         maxHp: 100,
@@ -90,8 +90,8 @@ export const player = add([
 
 refreshResourceUI();
 
-player.add([sprite("hands"), scale(2), pos(250, -300), anchor("left"), z(9)]);
-player.add([sprite("hands"), scale(2), pos(-250, -300), anchor("right"), z(9)]);
+player.add([sprite("hands"), scale(1.5), pos(250, -200), anchor("left"), z(9)]);
+player.add([sprite("hands"), scale(1.5), pos(-250, -200), anchor("right"), z(9)]);
 
 setCamScale(ZOOM_LEVEL);
 
@@ -202,11 +202,11 @@ slots.forEach(slot => {
         if (!itemType) return;
 
         if (itemType === 'sword') {
-            equippedWeapon = player.add([sprite("swordLevel1"), pos(-500, -500), anchor("left"), scale(1), rotate(0), "weapon", "sword"]);
+            equippedWeapon = player.add([sprite("swordLevel1"), pos(-500, -500), anchor("left"), scale(1), rotate(45), "weapon", "sword"]);
         } else if (itemType === "axe") {
-            equippedWeapon = player.add([sprite("axeLevel1"), pos(-500, -500), anchor("left"), scale(1), rotate(0), "weapon", "axe"]);
+            equippedWeapon = player.add([sprite("axeLevel1"), pos(-500, -500), anchor("left"), scale(1), rotate(45), "weapon", "axe"]);
         } else if (itemType === "bow") {
-            equippedWeapon = player.add([sprite("bowLevel1"), pos(-500, -700), anchor("left"), scale(1), rotate(0), "weapon", "bow"]);
+            equippedWeapon = player.add([sprite("bowLevel1"), pos(-500, -700), anchor("left"), scale(1), rotate(45), "weapon", "bow"]);
         }
 
 
