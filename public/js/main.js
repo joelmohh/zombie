@@ -399,7 +399,7 @@ onUpdate(() => {
 
         const hasTurret = conf.isDefense;
         const baseScale = hasTurret ? (conf.scale * 3) : conf.scale;
-        const baseSprite = hasTurret ? "wall" : conf.sprite;
+        const baseSprite = hasTurret ? "backBuildingLevel1" : conf.sprite;
 
         if (!placementGhost) {
             placementGhost = add([
