@@ -71,7 +71,7 @@ function createProjectile(posValue, angle, config) {
     if (config.type === "bomb") speed = 300;      
 
     add([
-        sprite(config.bulletSprite || "sword"), 
+        sprite(config.bulletSprite || "swordLevel1"), 
         pos(posValue),
         anchor("center"),
         scale(0.05),

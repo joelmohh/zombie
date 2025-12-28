@@ -7,7 +7,7 @@ export const WORLD_PADDING = 250;
 
 export const BUILDING_TYPES = {
     "wall": {
-        sprite: "wall",
+        sprite: "wallLevel1",
         width: 50, 
         height: 20,
         offset: { x: -50, y: -10 }, 
@@ -19,7 +19,7 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "gold-mine": {
-        sprite: "gold-mine", 
+        sprite: "goldMineLevel1", 
         width: 150, 
         height: 150, 
         offset: { x: -75, y: -75 },
@@ -31,7 +31,7 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "gold-miner": {
-        sprite: "minerTop", 
+        sprite: "goldMinerLevel1", 
         width: 150, 
         height: 150, 
         offset: { x: -75, y: -75 },
@@ -45,7 +45,7 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "door":{
-        sprite: "door",
+        sprite: "doorLevel1",
         width: 50, 
         height: 20,
         offset: { x: -50, y: -10 }, 
@@ -57,7 +57,7 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "tower_archer": {
-        sprite: "buildingTop", 
+        sprite: "archerTowerLevel1", 
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -70,10 +70,10 @@ export const BUILDING_TYPES = {
         type: "single",      
         commontype: "structure",
         isDefense: true,
-        bulletSprite: "sword" 
+        bulletSprite: "swordLevel1" 
     },
     "tower_cannon": {
-        sprite: "buildingTop",
+        sprite: "cannonTowerLevel1",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -86,10 +86,10 @@ export const BUILDING_TYPES = {
         type: "single",   
         commontype: "structure",
         isDefense: true,
-        bulletSprite: "wall" 
+        bulletSprite: "bombLevel1" 
     },
     "tower_bomber": {
-        sprite: "buildingTop",
+        sprite: "bombTowerLevel1",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -102,10 +102,10 @@ export const BUILDING_TYPES = {
         type: "bomb",        
         commontype: "structure",
         isDefense: true,
-        bulletSprite: "wall"
+        bulletSprite: "bombLevel1"
     },
     "tower_magic": {
-        sprite: "buildingTop",
+        sprite: "shotgunTowerLevel1",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -118,10 +118,10 @@ export const BUILDING_TYPES = {
         type: "shotgun",     
         isDefense: true,
         commontype: "structure",
-        bulletSprite: "sword" 
+        bulletSprite: "swordLevel1" 
     },
     "build_bases": {
-        sprite: "wall",
+        sprite: "backBuildingLevel1",
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
