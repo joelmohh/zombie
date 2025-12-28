@@ -73,7 +73,7 @@
 
         <div class="bottom-right">
             <div class="map-buttons">
-                <button class="btn-map shop">LOJA</button>
+                <button class="btn-map shop">SHOP</button>
                 <button class="btn-map help">HELP</button>
                 <button class="btn-map party">PARTY</button>
             </div>
@@ -99,7 +99,7 @@
         <button id="upgrade-btn"
             style="background: #2ecc71; color: white; border: none; padding: 5px 10px; cursor: pointer; font-family: 'Courier New'; font-weight: bold;">UPGRADE</button>
         <button id="delete-btn"
-            style="background: #e74c3c; color: white; border: none; padding: 5px 10px; cursor: pointer; font-family: 'Courier New'; font-weight: bold;">APAGAR</button>
+            style="background: #e74c3c; color: white; border: none; padding: 5px 10px; cursor: pointer; font-family: 'Courier New'; font-weight: bold;">DELETE</button>
     </div>
     <canvas id="game"></canvas>
 
@@ -111,48 +111,109 @@
 
     <div class="modal shop">
         <div class="modal-header">
-            <span>SHOP</span>
+            <h3>Shop</h3>
             <button class="close-btn">X</button>
         </div>
 
-        <div class="modal-content shop-content">
-            <div class="shop-section">
-                <h4>Weapon Upgrades</h4>
-                <div class="shop-list" id="weapon-upgrade-list">
-                    <button class="shop-item" data-weapon="sword">
-                        <div class="shop-title">Sword</div>
-                        <div class="shop-meta" data-role="level">Level 1 · Gray</div>
-                        <div class="shop-meta" data-role="cost">Next cost: 0 gold</div>
-                    </button>
-                    <button class="shop-item" data-weapon="axe">
-                        <div class="shop-title">Axe</div>
-                        <div class="shop-meta" data-role="level">Level 1 · Gray</div>
-                        <div class="shop-meta" data-role="cost">Next cost: 0 gold</div>
-                    </button>
-                    <button class="shop-item" data-weapon="bow">
-                        <div class="shop-title">Bow</div>
-                        <div class="shop-meta" data-role="level">Level 1 · Gray</div>
-                        <div class="shop-meta" data-role="cost">Next cost: 0 gold</div>
-                    </button>
-                </div>
+        <div class="modal-content shop-content" data-tabs="shop">
+            <div class="tab-bar">
+                <button class="tab-link is-active" data-tab-target="Weapon">Weapons (Upgrade)</button>
+                <button class="tab-link" data-tab-target="Utility">Potions</button>
             </div>
 
-            <div class="shop-section">
-                <h4>Potions</h4>
-                <div class="shop-list" id="potion-list">
-                    <button class="shop-item potion" data-potion="health">
-                        <div class="shop-title">Health Potion</div>
-                        <div class="shop-meta">Restores health immediately</div>
-                        <div class="shop-meta" data-role="cost">Cost: 0 gold</div>
-                    </button>
-                    <button class="shop-item potion" data-potion="shield">
-                        <div class="shop-title">Shield Potion</div>
-                        <div class="shop-meta">Grants shield, it's like extra life</div>
-                        <div class="shop-meta" data-role="cost">Cost: 0 gold</div>
-                    </button>
+            <div class="tab-panels">
+                <div class="tab-panel" data-tab-panel="Weapon">
+                    <div class="hud-shop-grid">
+                        <button class="hud-shop-item" data-item="Pickaxe" data-tier="2" data-type="Weapon">
+                            <strong>Pickaxe</strong>
+                            <span class="hud-shop-item-tier">Tier 2</span>
+                            <span class="hud-shop-item-gold">1.000</span>
+                            <span class="hud-shop-item-stats">
+                                <span class="hud-stats-current hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-current">20</span></p>
+                                    <p>Harvest: <span class="hud-stats-current">1,5</span></p>
+                                    <p>Attack Speed: <span class="hud-stats-current">3,33</span></p>
+                                </span>
+                                <span class="hud-stats-next hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-next">20</span></p>
+                                    <p>Harvest: <span class="hud-stats-next">3</span></p>
+                                    <p>Attack Speed: <span class="hud-stats-next">3,33</span></p>
+                                </span>
+                            </span>
+                        </button>
+
+                        <button class="hud-shop-item" data-item="Spear" data-tier="1" data-type="Weapon">
+                            <strong>Spear</strong>
+                            <span class="hud-shop-item-tier">Tier 1</span>
+                            <span class="hud-shop-item-gold">1.400</span>
+                            <span class="hud-shop-item-stats">
+                                <span class="hud-stats-current hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-current"><small>—</small></span></p>
+                                    <p>Range: <span class="hud-stats-current"><small>—</small></span></p>
+                                    <p>Attack Speed: <span class="hud-stats-current"><small>—</small></span></p>
+                                </span>
+                                <span class="hud-stats-next hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-next">30</span></p>
+                                    <p>Range: <span class="hud-stats-next">100</span></p>
+                                    <p>Attack Speed: <span class="hud-stats-next">4</span></p>
+                                </span>
+                            </span>
+                        </button>
+
+                        <button class="hud-shop-item" data-item="Bow" data-tier="1" data-type="Weapon">
+                            <strong>Bow</strong>
+                            <span class="hud-shop-item-tier">Tier 1</span>
+                            <span class="hud-shop-item-gold">100</span>
+                            <span class="hud-shop-item-stats">
+                                <span class="hud-stats-current hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-current"><small>—</small></span></p>
+                                    <p>Attack Speed: <span class="hud-stats-current"><small>—</small></span></p>
+                                </span>
+                                <span class="hud-stats-next hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-next">20</span></p>
+                                    <p>Attack Speed: <span class="hud-stats-next">2</span></p>
+                                </span>
+                            </span>
+                        </button>
+
+                        <button class="hud-shop-item" data-item="Bomb" data-tier="1" data-type="Weapon">
+                            <strong>Bomb</strong>
+                            <span class="hud-shop-item-tier">Tier 1</span>
+                            <span class="hud-shop-item-gold">100</span>
+                            <span class="hud-shop-item-stats">
+                                <span class="hud-stats-current hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-current"><small>—</small></span></p>
+                                    <p>Range: <span class="hud-stats-current"><small>—</small></span></p>
+                                    <p>Attack Speed: <span class="hud-stats-current"><small>—</small></span></p>
+                                </span>
+                                <span class="hud-stats-next hud-stats-values">
+                                    <p>Damage: <span class="hud-stats-next">10</span></p>
+                                    <p>Range: <span class="hud-stats-next">700</span></p>
+                                    <p>Attack Speed: <span class="hud-stats-next">2</span></p>
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-panel" data-tab-panel="Utility" hidden>
+                    <div class="hud-shop-grid">
+                        <button class="hud-shop-item" data-item="HealthPotion" data-tier="1" data-type="Utility">
+                            <strong>Health Potion</strong>
+                            <span class="hud-shop-item-tier">Tier 1</span>
+                            <span class="hud-shop-item-gold">100</span>
+                            <span class="hud-shop-item-description">Heals your player to full health.</span>
+                        </button>
+
+                        <button class="hud-shop-item" data-item="PetHealthPotion" data-tier="1" data-type="Utility">
+                            <strong>Pet Health Potion</strong>
+                            <span class="hud-shop-item-tier">Tier 1</span>
+                            <span class="hud-shop-item-gold">100</span>
+                            <span class="hud-shop-item-description">Heals your pet to full health.</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="shop-hint">Level colors follow building upgrades.</div>
         </div>
     </div>
     <div class="modal help">
@@ -171,10 +232,18 @@
             <button class="close-btn">X</button>
         </div>
 
-        <div class="modal-content party-content">
-            <div class="party-columns">
-                <div class="party-column">
-                    <h4>Your Party</h4>
+        <div class="modal-content party-content" data-tabs="party">
+            <div class="tab-bar">
+                <button class="tab-link is-active" data-tab-target="your-party">Your Party</button>
+                <button class="tab-link" data-tab-target="public-parties">Public Parties</button>
+            </div>
+
+            <div class="tab-panels">
+                <div class="tab-panel" data-tab-panel="your-party">
+                    <div class="party-panel-heading">
+                        <h4>Your Party</h4>
+                        <button class="pill-btn">Invite</button>
+                    </div>
                     <ul id="your-party-list" class="party-list">
                         <li>Empty slot</li>
                         <li>Empty slot</li>
@@ -182,12 +251,16 @@
                         <li>Empty slot</li>
                     </ul>
                 </div>
-                <div class="party-column">
-                    <h4>Public Parties</h4>
+
+                <div class="tab-panel" data-tab-panel="public-parties" hidden>
+                    <div class="party-panel-heading">
+                        <h4>Public Parties</h4>
+                        <button class="pill-btn">Refresh</button>
+                    </div>
                     <ul id="public-party-list" class="party-list">
-                        <li>Alpha Squad · aberto</li>
-                        <li>Builders Only · aberto</li>
-                        <li>Night Watch · fechado</li>
+                        <li>Alpha Squad · open</li>
+                        <li>Builders Only · open</li>
+                        <li>Night Watch · closed</li>
                     </ul>
                 </div>
             </div>

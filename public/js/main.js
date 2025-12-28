@@ -139,6 +139,38 @@ onKeyDown('d', () => player.move(SPEED, 0));
 
 // INVENTORY
 let equippedWeapon = null;
+
+// Potion inventory
+const potionInventory = {
+    health: 0,
+    shield: 0
+};
+
+function updatePotionUI() {
+    const healthSlot = document.getElementById("potion-health");
+    const shieldSlot = document.getElementById("potion-shield");
+    
+    if (healthSlot) {
+        if (potionInventory.health > 0) {
+            healthSlot.setAttribute('data-type', 'Health');
+            healthSlot.setAttribute('data-count', potionInventory.health);
+            healthSlot.style.display = 'flex';
+        } else {
+            healthSlot.style.display = 'none';
+        }
+    }
+    
+    if (shieldSlot) {
+        if (potionInventory.shield > 0) {
+            shieldSlot.setAttribute('data-type', 'Shield');
+            shieldSlot.setAttribute('data-count', potionInventory.shield);
+            shieldSlot.style.display = 'flex';
+        } else {
+            shieldSlot.style.display = 'none';
+        }
+    }
+}
+
 const slots = document.querySelectorAll('.inventory .slot');
 slots.forEach(slot => {
     slot.addEventListener('click', () => {
@@ -149,6 +181,18 @@ slots.forEach(slot => {
         setTimeout(() => document.getElementById("game").focus(), 10);
 
         const itemType = slot.getAttribute('data-item');
+        const potionType = slot.getAttribute('data-potion');
+
+        // Handle potions
+        if (potionType) {
+            if (potionInventory[potionType] > 0) {
+                usePotion(potionType);
+            } else {
+                showToast("No potions available", 2000, ToastType.WARNING);
+            }
+            slot.style.border = '2px solid white';
+            return;
+        }
 
         if (equippedWeapon) {
             destroy(equippedWeapon);
@@ -172,6 +216,25 @@ slots.forEach(slot => {
         }
     })
 })
+
+function usePotion(potionType) {
+    if (potionInventory[potionType] <= 0) return;
+    
+    if (potionType === "health") {
+        const heal = potionCatalog.health.heal;
+        player.hp = Math.min(player.hp + heal, player.maxHp);
+        showFloatingText(`+${heal} Health`, rgb(100, 255, 100));
+    } else if (potionType === "shield") {
+        player.maxShield = potionCatalog.shield.shield;
+        player.shield = player.maxShield;
+        showFloatingText(`+${potionCatalog.shield.shield} Shield`, rgb(100, 150, 255));
+    }
+    
+    potionInventory[potionType]--;
+    updatePotionUI();
+    updateHealth();
+    document.getElementById("game").focus();
+}
 
 function getEquippedWeaponType() {
     if (!equippedWeapon) return null;
@@ -493,6 +556,7 @@ function buildStructure(type, position) {
             maxHp: structure.health,
             baseHealth: structure.health,
             buildingId: type,
+            structureType: type,
             cost: structure.cost,
             upgradeLevel: 1,
             baseScale: baseScale
@@ -696,6 +760,62 @@ onKeyPress("space", () => {
 const structureMenu = document.getElementById("structure-menu");
 let selectedStructure = null;
 
+function getStructureUpgradeCost(structureType, currentLevel) {
+    const config = BUILDING_TYPES[structureType];
+    if (!config) return { gold: 0, wood: 0, stone: 0 };
+    
+    const baseCost = config.cost || { wood: 0, stone: 0 };
+    const levelMultiplier = 1 + (currentLevel * 0.3);
+    
+    return {
+        gold: Math.round(20 * levelMultiplier),
+        wood: Math.round((baseCost.wood || 0) * levelMultiplier),
+        stone: Math.round((baseCost.stone || 0) * levelMultiplier)
+    };
+}
+
+function getStructureName(structureType) {
+    const names = {
+        "wall": "Wall",
+        "door": "Door",
+        "gold-mine": "Gold Mine",
+        "gold-miner": "Gold Miner",
+        "tower_archer": "Archer Tower",
+        "tower_cannon": "Cannon Tower",
+        "tower_bomber": "Bomber Tower",
+        "tower_magic": "Magic Tower"
+    };
+    return names[structureType] || "Structure";
+}
+
+function updateStructureMenu() {
+    if (!selectedStructure) return;
+    
+    const currentLevel = selectedStructure.upgradeLevel || 1;
+    const structureType = selectedStructure.structureType;
+    const cost = getStructureUpgradeCost(structureType, currentLevel);
+    const colorInfo = getLevelColor(currentLevel);
+    
+    document.getElementById("structure-name").textContent = getStructureName(structureType);
+    document.getElementById("structure-level").textContent = currentLevel;
+    document.getElementById("structure-level").style.color = colorInfo.hex;
+    document.getElementById("structure-health").textContent = `${Math.round(selectedStructure.hp)}/${Math.round(selectedStructure.maxHp)}`;
+    document.getElementById("upgrade-cost-gold").textContent = cost.gold;
+    document.getElementById("upgrade-cost-wood").textContent = cost.wood;
+    document.getElementById("upgrade-cost-stone").textContent = cost.stone;
+    
+    const upgradeBtn = document.getElementById("upgrade-btn");
+    if (currentLevel >= MAX_BUILDING_LEVEL) {
+        upgradeBtn.textContent = "MAX LEVEL";
+        upgradeBtn.disabled = true;
+        upgradeBtn.style.opacity = "0.5";
+    } else {
+        upgradeBtn.textContent = "UPGRADE";
+        upgradeBtn.disabled = false;
+        upgradeBtn.style.opacity = "1";
+    }
+}
+
 onMousePress("left", () => {
     if (structureMenu) structureMenu.style.display = "none";
 
@@ -710,6 +830,8 @@ onMousePress("left", () => {
             structureMenu.style.display = "flex";
             structureMenu.style.left = `${screenPos.x}px`;
             structureMenu.style.top = `${screenPos.y}px`;
+            
+            updateStructureMenu();
 
             isAttacking = true;
             wait(0.1, () => isAttacking = false);
@@ -740,6 +862,21 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
             return;
         }
 
+        const cost = getStructureUpgradeCost(selectedStructure.structureType, currentLevel);
+        
+        // Check if player has enough resources
+        if (player.gold < cost.gold || player.wood < cost.wood || player.stone < cost.stone) {
+            showFloatingText("Not enough resources", rgb(255, 100, 100));
+            return;
+        }
+
+        // Deduct resources
+        player.gold -= cost.gold;
+        player.wood -= cost.wood;
+        player.stone -= cost.stone;
+        
+        refreshResourceUI();
+
         const nextLevel = currentLevel + 1;
         selectedStructure.upgradeLevel = nextLevel;
 
@@ -749,7 +886,11 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
 
         applyStructureColor(selectedStructure);
         updateBuildingHealthBar(selectedStructure);
-        showToast(`Upgrade level ${nextLevel} - ${getLevelColor(nextLevel).name}`, 2000, ToastType.SUCCESS);
+        
+        const colorInfo = getLevelColor(nextLevel);
+        showToast(`Upgraded to level ${nextLevel} - ${colorInfo.name}`, 2000, ToastType.SUCCESS);
+        
+        updateStructureMenu();
 
         structureMenu.style.display = "none";
         document.getElementById("game").focus();
@@ -757,9 +898,9 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
 });
 
 const weaponLabels = {
-    sword: "Espada",
-    axe: "Machado",
-    bow: "Arco"
+    sword: "Sword",
+    axe: "Axe",
+    bow: "Bow"
 };
 
 function renderShopUI() {
@@ -772,7 +913,7 @@ function renderShopUI() {
         const levelEl = btn.querySelector('[data-role="level"]');
         const costEl = btn.querySelector('[data-role="cost"]');
 
-        if (levelEl) levelEl.textContent = `Nível ${state.level} · ${colorInfo.name}`;
+        if (levelEl) levelEl.textContent = `Level ${state.level} · ${colorInfo.name}`;
         if (costEl) {
             if (state.level >= MAX_BUILDING_LEVEL) {
                 costEl.textContent = "Maximum level reached";
@@ -831,17 +972,12 @@ function consumePotion(type) {
 
     player.gold -= potion.cost;
     refreshResourceUI();
+    potionInventory[type]++;
+    updatePotionUI();
 
-    if (type === "health") {
-        player.hp = Math.min(player.maxHp, player.hp + potion.heal);
-        showFloatingText(`+${potion.heal} HP`, rgb(144, 238, 144));
-    }
-
-    if (type === "shield") {
-        player.maxShield = Math.max(player.maxShield, potion.shield);
-        player.shield = potion.shield;
-        showFloatingText(`Shield ${potion.shield}`, rgb(135, 206, 235));
-    }
+    const potionName = type === "health" ? "Health Potion" : "Shield Potion";
+    showFloatingText(`Purchased: ${potionName}`, rgb(100, 200, 100));
+    showToast(`+1 ${potionName}`, 1500, ToastType.SUCCESS);
 
     updateHealth();
 }
