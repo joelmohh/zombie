@@ -125,7 +125,7 @@ export function loadAllSprites() {
     loadSafeSprite('doorLevel7', '/public/assets/buildings/doorLevel7.svg');
 
     // Potions
-    loadSafeSprite("potionHealth", "/public/assets/weapon/potionHealth.svg");
-    loadSafeSprite("potionStamina", "/public/assets/weapon/potionStamina.svg");
+    loadSafeSprite("healthPotion", "/public/assets/weapon/healthPotion.svg");
+    loadSafeSprite("shieldPotion", "/public/assets/weapon/shieldPotion.svg");
 
 }

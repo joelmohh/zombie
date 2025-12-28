@@ -57,7 +57,7 @@ export const BUILDING_TYPES = {
         commontype: "structure",
     },
     "tower_archer": {
-        sprite: "archerTowerLevel1", 
+        sprite: "arrowTowerLevel1", 
         width: 100, height: 100,
         offset: { x: -50, y: -50 },
         hitboxSize: { w: 100, h: 100 },
@@ -140,13 +140,3 @@ export const BUTTON_MAPPING = {
     5: "tower_magic", 
     6: "tower_bomber" 
 };
-export const LEVEL_COLORS = [
-    null,
-    { name: "Gray", tint: "rgb(128, 128, 128)", hex: "#808080" },
-    { name: "Brown", tint: "rgb(139, 69, 19)", hex: "#8b4513" },
-    { name: "White", tint: "rgb(255, 255, 255)", hex: "#ffffff" },
-    { name: "Yellow", tint: "rgb(255, 215, 0)", hex: "#ffd700" },
-    { name: "Blue", tint: "rgb(70, 130, 180)", hex: "#4682b4" },
-    { name: "Red", tint: "rgb(220, 20, 60)", hex: "#dc143c" },
-    { name: "Green", tint: "rgb(34, 139, 34)", hex: "#228b22" },
-];

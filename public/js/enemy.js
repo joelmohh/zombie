@@ -144,7 +144,7 @@ export function spawnZombie(position) {
 
     add([
         circle(20),
-        color(100, 255, 100), 
+        color(150, 50, 50), 
         anchor("center"),
         area(),
         body(), 
@@ -206,8 +206,8 @@ function clampValue(value, min, max) {
 export function damageZombie(zombie, dmg) {
     if (zombie.hp) {
         zombie.hp -= dmg;
-        zombie.color = rgb(255, 0, 0);
-        wait(0.1, () => zombie.color = rgb(255, 255, 255));
+        zombie.color = rgb(255, 100, 100);
+        wait(0.1, () => zombie.color = rgb(150, 50, 50));
 
         if (zombie.hp <= 0) {
             destroy(zombie);

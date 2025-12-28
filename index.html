@@ -66,8 +66,12 @@
                 <div class="slot" data-index="0" data-item="sword"><img src="/public/assets/weapon/swordLevel1.svg" class="icon"></div>
                 <div class="slot" data-index="1" data-item="axe"><img src="/public/assets/weapon/axeLevel1.svg" class="icon"></div>
                 <div class="slot" data-index="2" data-item="bow"><img src="/public/assets/weapon/bowLevel1.svg" class="icon"></div>
-                <div class="slot" data-index="3" data-item="potion"></div>
-                <div class="slot" data-index="4" data-item="anything"></div>
+                <div class="slot" id="potion-health" data-index="3" data-potion="health" style="display: none;">
+                    <img src="/public/assets/weapon/healthPotion.svg" class="icon" alt="Health Potion">
+                </div>
+                <div class="slot" id="potion-shield" data-index="4" data-potion="shield" style="display: none;">
+                    <img src="/public/assets/weapon/shieldPotion.svg" class="icon" alt="Shield Potion">
+                </div>
             </div>
         </div>
 
@@ -124,92 +128,38 @@
             <div class="tab-panels">
                 <div class="tab-panel" data-tab-panel="Weapon">
                     <div class="hud-shop-grid">
-                        <button class="hud-shop-item" data-item="Pickaxe" data-tier="2" data-type="Weapon">
-                            <strong>Pickaxe</strong>
-                            <span class="hud-shop-item-tier">Tier 2</span>
-                            <span class="hud-shop-item-gold">1.000</span>
-                            <span class="hud-shop-item-stats">
-                                <span class="hud-stats-current hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-current">20</span></p>
-                                    <p>Harvest: <span class="hud-stats-current">1,5</span></p>
-                                    <p>Attack Speed: <span class="hud-stats-current">3,33</span></p>
-                                </span>
-                                <span class="hud-stats-next hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-next">20</span></p>
-                                    <p>Harvest: <span class="hud-stats-next">3</span></p>
-                                    <p>Attack Speed: <span class="hud-stats-next">3,33</span></p>
-                                </span>
-                            </span>
+                        <button class="hud-shop-item shop-item" data-weapon="sword">
+                            <strong>Sword</strong>
+                            <span data-role="level">Level 1</span>
+                            <span data-role="cost">Next cost: 0 gold</span>
                         </button>
 
-                        <button class="hud-shop-item" data-item="Spear" data-tier="1" data-type="Weapon">
-                            <strong>Spear</strong>
-                            <span class="hud-shop-item-tier">Tier 1</span>
-                            <span class="hud-shop-item-gold">1.400</span>
-                            <span class="hud-shop-item-stats">
-                                <span class="hud-stats-current hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-current"><small>—</small></span></p>
-                                    <p>Range: <span class="hud-stats-current"><small>—</small></span></p>
-                                    <p>Attack Speed: <span class="hud-stats-current"><small>—</small></span></p>
-                                </span>
-                                <span class="hud-stats-next hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-next">30</span></p>
-                                    <p>Range: <span class="hud-stats-next">100</span></p>
-                                    <p>Attack Speed: <span class="hud-stats-next">4</span></p>
-                                </span>
-                            </span>
+                        <button class="hud-shop-item shop-item" data-weapon="axe">
+                            <strong>Axe</strong>
+                            <span data-role="level">Level 1</span>
+                            <span data-role="cost">Next cost: 0 gold</span>
                         </button>
 
-                        <button class="hud-shop-item" data-item="Bow" data-tier="1" data-type="Weapon">
+                        <button class="hud-shop-item shop-item" data-weapon="bow">
                             <strong>Bow</strong>
-                            <span class="hud-shop-item-tier">Tier 1</span>
-                            <span class="hud-shop-item-gold">100</span>
-                            <span class="hud-shop-item-stats">
-                                <span class="hud-stats-current hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-current"><small>—</small></span></p>
-                                    <p>Attack Speed: <span class="hud-stats-current"><small>—</small></span></p>
-                                </span>
-                                <span class="hud-stats-next hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-next">20</span></p>
-                                    <p>Attack Speed: <span class="hud-stats-next">2</span></p>
-                                </span>
-                            </span>
-                        </button>
-
-                        <button class="hud-shop-item" data-item="Bomb" data-tier="1" data-type="Weapon">
-                            <strong>Bomb</strong>
-                            <span class="hud-shop-item-tier">Tier 1</span>
-                            <span class="hud-shop-item-gold">100</span>
-                            <span class="hud-shop-item-stats">
-                                <span class="hud-stats-current hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-current"><small>—</small></span></p>
-                                    <p>Range: <span class="hud-stats-current"><small>—</small></span></p>
-                                    <p>Attack Speed: <span class="hud-stats-current"><small>—</small></span></p>
-                                </span>
-                                <span class="hud-stats-next hud-stats-values">
-                                    <p>Damage: <span class="hud-stats-next">10</span></p>
-                                    <p>Range: <span class="hud-stats-next">700</span></p>
-                                    <p>Attack Speed: <span class="hud-stats-next">2</span></p>
-                                </span>
-                            </span>
+                            <span data-role="level">Level 1</span>
+                            <span data-role="cost">Next cost: 0 gold</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="tab-panel" data-tab-panel="Utility" hidden>
                     <div class="hud-shop-grid">
-                        <button class="hud-shop-item" data-item="HealthPotion" data-tier="1" data-type="Utility">
+                        <button class="hud-shop-item shop-item potion" data-potion="health">
                             <strong>Health Potion</strong>
-                            <span class="hud-shop-item-tier">Tier 1</span>
-                            <span class="hud-shop-item-gold">100</span>
                             <span class="hud-shop-item-description">Heals your player to full health.</span>
+                            <span data-role="cost">Cost: 0 gold</span>
                         </button>
 
-                        <button class="hud-shop-item" data-item="PetHealthPotion" data-tier="1" data-type="Utility">
-                            <strong>Pet Health Potion</strong>
-                            <span class="hud-shop-item-tier">Tier 1</span>
-                            <span class="hud-shop-item-gold">100</span>
-                            <span class="hud-shop-item-description">Heals your pet to full health.</span>
+                        <button class="hud-shop-item shop-item potion" data-potion="shield">
+                            <strong>Shield Potion</strong>
+                            <span class="hud-shop-item-description">Adds a full shield.</span>
+                            <span data-role="cost">Cost: 0 gold</span>
                         </button>
                     </div>
                 </div>

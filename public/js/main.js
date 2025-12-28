@@ -37,7 +37,7 @@ import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './co
 import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './grid.js';
 import { loadAllSprites } from './assets.js';
 import { updateLeaderboard } from './leaderboard.js';
-import { initDefense, applyWeaponTint, getWeaponUpgradeCost, getWeaponDamage, getLevelColor, potionCatalog, weaponState, MAX_BUILDING_LEVEL } from './defense.js';
+import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, potionCatalog, weaponState, MAX_BUILDING_LEVEL, getLevelSpriteName, getWeaponSprite } from './defense.js';
 import { initEnemySystem, damageZombie } from './enemy.js';
 import { getResource } from './world.js';
 import { showToast, ToastType } from './toast.js';
@@ -90,8 +90,8 @@ export const player = add([
 
 refreshResourceUI();
 
-player.add([sprite("hands"), scale(1.5), pos(250, -200), anchor("left"), z(9)]);
-player.add([sprite("hands"), scale(1.5), pos(-250, -200), anchor("right"), z(9)]);
+player.add([sprite("hands"), scale(1), pos(800, -300), anchor("center"), z(9)]);
+player.add([sprite("hands"), scale(1), pos(-800, -300), anchor("center"), z(9)]);
 
 setCamScale(ZOOM_LEVEL);
 
@@ -171,6 +171,8 @@ function updatePotionUI() {
     }
 }
 
+updatePotionUI();
+
 const slots = document.querySelectorAll('.inventory .slot');
 slots.forEach(slot => {
     slot.addEventListener('click', () => {
@@ -201,18 +203,21 @@ slots.forEach(slot => {
 
         if (!itemType) return;
 
+        const level = weaponState[itemType]?.level || 1;
+        const spriteName = getWeaponSprite(itemType, level);
+
         if (itemType === 'sword') {
-            equippedWeapon = player.add([sprite("swordLevel1"), pos(-500, -500), anchor("left"), scale(1), rotate(45), "weapon", "sword"]);
+            equippedWeapon = player.add([sprite(spriteName), pos(700, -700), anchor("center"), scale(1), rotate(90), "weapon", "sword"]);
         } else if (itemType === "axe") {
-            equippedWeapon = player.add([sprite("axeLevel1"), pos(-500, -500), anchor("left"), scale(1), rotate(45), "weapon", "axe"]);
+            equippedWeapon = player.add([sprite(spriteName), pos(700, -700), anchor("center"), scale(1), rotate(90), "weapon", "axe"]);
         } else if (itemType === "bow") {
-            equippedWeapon = player.add([sprite("bowLevel1"), pos(-500, -700), anchor("left"), scale(1), rotate(45), "weapon", "bow"]);
+            equippedWeapon = player.add([sprite(spriteName), pos(0, -1000), anchor("center"), scale(1), rotate(0), "weapon", "bow"]);
         }
 
 
         if (equippedWeapon && weaponState[itemType]) {
             equippedWeapon.weaponType = itemType;
-            applyWeaponTint(equippedWeapon, weaponState[itemType].level);
+            applyWeaponSprite(equippedWeapon, itemType, level);
         }
     })
 })
@@ -370,13 +375,19 @@ let currentBuilding = null;
 let placementGhost = null;
 let canBuildHere = false;
 
-function applyStructureColor(structure) {
-    const level = structure.upgradeLevel || 1;
-    const colorInfo = getLevelColor(level);
-    structure.color = colorInfo.tint;
+function applyStructureAppearance(structure) {
+    const level = Math.min(structure.upgradeLevel || 1, MAX_BUILDING_LEVEL);
+    const baseName = structure.foundationBaseSprite || structure.sprite;
+    const foundationSprite = getLevelSpriteName(baseName, level);
+    if (foundationSprite) {
+        structure.use(sprite(foundationSprite));
+    }
+
     const turret = structure.get("turret")[0];
     if (turret) {
-        turret.color = colorInfo.tint;
+        const turretBase = structure.turretBaseSprite || structure.sprite;
+        const turretSprite = getLevelSpriteName(turretBase, level);
+        turret.use(sprite(turretSprite));
     }
 }
 
@@ -399,7 +410,7 @@ onUpdate(() => {
 
         const hasTurret = conf.isDefense;
         const baseScale = hasTurret ? (conf.scale * 3) : conf.scale;
-        const baseSprite = hasTurret ? "backBuildingLevel1" : conf.sprite;
+        const baseSprite = hasTurret ? (conf.foundationSprite || "backBuildingLevel1") : conf.sprite;
 
         if (!placementGhost) {
             placementGhost = add([
@@ -408,7 +419,7 @@ onUpdate(() => {
                 pos(vec2(idealX, idealY)),
                 anchor("center"),
                 body({ isStatic: true }),
-                scale(baseScale),
+                scale(0.05),
                 z(100),
                 "ghost"
             ]);
@@ -417,7 +428,7 @@ onUpdate(() => {
                     sprite(conf.sprite),
                     pos(0, 0),
                     anchor("center"),
-                    scale(1 / 3),
+                    scale(1),
                     rotate(0),
                     opacity(0.5),
                     z(101),
@@ -436,7 +447,7 @@ onUpdate(() => {
                     pos(vec2(idealX, idealY)),
                     anchor("center"),
                     body({ isStatic: true }),
-                    scale(baseScale),
+                    scale(0.05),
                     z(100),
                     "ghost"
                 ]);
@@ -445,7 +456,7 @@ onUpdate(() => {
                         sprite(conf.sprite),
                         pos(0, 0),
                         anchor("center"),
-                        scale(1 / 3),
+                        scale(1),
                         rotate(0),
                         opacity(0.5),
                         z(101),
@@ -537,11 +548,13 @@ function buildStructure(type, position) {
     }
 
     const hasTurret = structure.isDefense;
-    const baseScale = hasTurret ? (structure.scale * 3) : structure.scale;
-    const baseSprite = hasTurret ? "wall" : structure.sprite;
+    const baseScale = hasTurret ? (structure.scale) : structure.scale;
+    const foundationBaseSprite = hasTurret ? (structure.foundationSprite || "backBuildingLevel1") : structure.sprite;
+    const foundationSprite = getLevelSpriteName(foundationBaseSprite, 1);
+    const turretBaseSprite = hasTurret ? structure.sprite : null;
 
     const building = add([
-        sprite(baseSprite),
+        sprite(foundationSprite),
         opacity(opacityValue),
         pos(position),
         anchor("center"),
@@ -559,17 +572,19 @@ function buildStructure(type, position) {
             structureType: type,
             cost: structure.cost,
             upgradeLevel: 1,
-            baseScale: baseScale
+            baseScale: baseScale,
+            foundationBaseSprite,
+            turretBaseSprite
         },
         offscreen({ hide: true, pause: true, distance: 300 })
     ]);
 
     if (hasTurret) {
         building.add([
-            sprite(structure.sprite),
+            sprite(getLevelSpriteName(turretBaseSprite, 1)),
             pos(0, 0),
             anchor("center"),
-            scale(1 / 3),
+            scale(1),
             rotate(0),
             z(1),
             "turret"
@@ -581,7 +596,7 @@ function buildStructure(type, position) {
     if (building.onDestroy) {
         building.onDestroy(() => freeCells(cells));
     }
-    applyStructureColor(building);
+    applyStructureAppearance(building);
 }
 
 // Key Bindings
@@ -602,7 +617,7 @@ constructionSlots.forEach(slot => {
         const type = slot.getAttribute('data-id');
 
         if (!BUILDING_TYPES[type]) {
-            console.warn(`Tipo "${type}" não definido no config.js`);
+            console.warn(`Type "${type}" not defined in config.js`);
             return;
         }
 
@@ -643,7 +658,6 @@ function performAttack() {
         const currentCount = get(currentBuilding).length;
 
         if (currentCount >= maxLimit) {
-            // TODO
             return
         }
         if (placementGhost && canBuildHere) {
@@ -662,19 +676,18 @@ function performAttack() {
         wait(FIRE_RATE, () => canShoot = true);
 
         const arrowDamage = getWeaponDamage("bow");
-        const arrowTint = getLevelColor(weaponState.bow.level).tint;
+        const arrowSprite = getWeaponSprite("sword", weaponState.bow.level);
 
         const mouseWorld = toWorld(mousePos());
         const direction = mouseWorld.sub(player.pos).unit();
         const spawnPos = player.pos.add(direction.scale(80));
 
         const arrow = add([
-            sprite("sword"),
+            sprite(arrowSprite),
             pos(spawnPos),
             anchor("center"),
-            rotate(direction.angle()),
+            rotate(45),
             scale(0.04),
-            color(arrowTint),
             area(),
             move(direction, 1000),
             offscreen({ destroy: true }),
@@ -794,25 +807,35 @@ function updateStructureMenu() {
     const currentLevel = selectedStructure.upgradeLevel || 1;
     const structureType = selectedStructure.structureType;
     const cost = getStructureUpgradeCost(structureType, currentLevel);
-    const colorInfo = getLevelColor(currentLevel);
     
-    document.getElementById("structure-name").textContent = getStructureName(structureType);
-    document.getElementById("structure-level").textContent = currentLevel;
-    document.getElementById("structure-level").style.color = colorInfo.hex;
-    document.getElementById("structure-health").textContent = `${Math.round(selectedStructure.hp)}/${Math.round(selectedStructure.maxHp)}`;
-    document.getElementById("upgrade-cost-gold").textContent = cost.gold;
-    document.getElementById("upgrade-cost-wood").textContent = cost.wood;
-    document.getElementById("upgrade-cost-stone").textContent = cost.stone;
-    
+    const nameEl = document.getElementById("structure-name");
+    const levelEl = document.getElementById("structure-level");
+    const healthEl = document.getElementById("structure-health");
+    const goldCostEl = document.getElementById("upgrade-cost-gold");
+    const woodCostEl = document.getElementById("upgrade-cost-wood");
+    const stoneCostEl = document.getElementById("upgrade-cost-stone");
     const upgradeBtn = document.getElementById("upgrade-btn");
-    if (currentLevel >= MAX_BUILDING_LEVEL) {
-        upgradeBtn.textContent = "MAX LEVEL";
-        upgradeBtn.disabled = true;
-        upgradeBtn.style.opacity = "0.5";
-    } else {
-        upgradeBtn.textContent = "UPGRADE";
-        upgradeBtn.disabled = false;
-        upgradeBtn.style.opacity = "1";
+    
+    if (nameEl) nameEl.textContent = getStructureName(structureType);
+    if (levelEl) {
+        levelEl.textContent = currentLevel;
+        levelEl.style.color = "";
+    }
+    if (healthEl) healthEl.textContent = `${Math.round(selectedStructure.hp)}/${Math.round(selectedStructure.maxHp)}`;
+    if (goldCostEl) goldCostEl.textContent = cost.gold;
+    if (woodCostEl) woodCostEl.textContent = cost.wood;
+    if (stoneCostEl) stoneCostEl.textContent = cost.stone;
+    
+    if (upgradeBtn) {
+        if (currentLevel >= MAX_BUILDING_LEVEL) {
+            upgradeBtn.textContent = "MAX LEVEL";
+            upgradeBtn.disabled = true;
+            upgradeBtn.style.opacity = "0.5";
+        } else {
+            upgradeBtn.textContent = "UPGRADE";
+            upgradeBtn.disabled = false;
+            upgradeBtn.style.opacity = "1";
+        }
     }
 }
 
@@ -884,11 +907,10 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
         selectedStructure.maxHp = computeStructureHealth(baseHealth, nextLevel);
         selectedStructure.hp = selectedStructure.maxHp;
 
-        applyStructureColor(selectedStructure);
+        applyStructureAppearance(selectedStructure);
         updateBuildingHealthBar(selectedStructure);
         
-        const colorInfo = getLevelColor(nextLevel);
-        showToast(`Upgraded to level ${nextLevel} - ${colorInfo.name}`, 2000, ToastType.SUCCESS);
+        showToast(`Upgraded to level ${nextLevel}`, 2000, ToastType.SUCCESS);
         
         updateStructureMenu();
 
@@ -908,12 +930,10 @@ function renderShopUI() {
         const type = btn.getAttribute('data-weapon');
         const state = weaponState[type];
         if (!state) return;
-
-        const colorInfo = getLevelColor(state.level);
         const levelEl = btn.querySelector('[data-role="level"]');
         const costEl = btn.querySelector('[data-role="cost"]');
 
-        if (levelEl) levelEl.textContent = `Level ${state.level} · ${colorInfo.name}`;
+        if (levelEl) levelEl.textContent = `Level ${state.level}`;
         if (costEl) {
             if (state.level >= MAX_BUILDING_LEVEL) {
                 costEl.textContent = "Maximum level reached";
@@ -921,8 +941,7 @@ function renderShopUI() {
                 costEl.textContent = `Next cost: ${getWeaponUpgradeCost(type)} gold`;
             }
         }
-
-        btn.style.borderColor = colorInfo.hex;
+        btn.style.borderColor = "";
     });
 
     document.querySelectorAll('.shop-item.potion').forEach(btn => {
@@ -939,7 +958,7 @@ function purchaseWeaponUpgrade(type) {
     const state = weaponState[type];
     if (!state) return;
     if (state.level >= MAX_BUILDING_LEVEL) {
-        showFloatingText("Weapon at maximum level", getLevelColor(state.level).tint);
+        showFloatingText("Weapon at maximum level");
         return;
     }
 
@@ -954,11 +973,11 @@ function purchaseWeaponUpgrade(type) {
     state.level += 1;
 
     if (equippedWeapon && getEquippedWeaponType() === type) {
-        applyWeaponTint(equippedWeapon, state.level);
+        applyWeaponSprite(equippedWeapon, type, state.level);
     }
 
     renderShopUI();
-    showFloatingText(`${weaponLabels[type]} level ${state.level}`, getLevelColor(state.level).tint);
+    showFloatingText(`${weaponLabels[type]} level ${state.level}`);
 }
 
 function consumePotion(type) {

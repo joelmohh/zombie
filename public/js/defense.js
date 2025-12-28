@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, LEVEL_COLORS } from "./config.js";
+import { BUILDING_TYPES } from "./config.js";
 import { damageZombie } from "./enemy.js";
 
 export function initDefense() {
@@ -116,7 +116,9 @@ function createExplosion(posValue, radius, damage) {
     });
 }
 
-export const MAX_BUILDING_LEVEL = 5;
+export const MAX_BUILDING_LEVEL = 7;
+export const MAX_WEAPON_LEVEL = MAX_BUILDING_LEVEL;
+const MAX_SPRITE_LEVEL = 7;
 
 export const weaponState = {
     sword: { level: 1, baseDamage: 24 },
@@ -129,8 +131,13 @@ export const potionCatalog = {
     shield: { cost: 55, shield: 80 }
 };
 
-export function getLevelColor(level) {
-    return LEVEL_COLORS[Math.min(level, LEVEL_COLORS.length - 1)] || LEVEL_COLORS[1];
+export function getLevelSpriteName(baseName, level) {
+    if (!baseName) return baseName;
+    const safeLevel = Math.min(level, MAX_SPRITE_LEVEL);
+    if (/Level\d+$/i.test(baseName)) {
+        return baseName.replace(/Level\d+$/i, `Level${safeLevel}`);
+    }
+    return `${baseName}Level${safeLevel}`;
 }
 
 export function getWeaponDamage(type) {
@@ -146,7 +153,12 @@ export function getWeaponUpgradeCost(type) {
     return 30 + state.level * 25;
 }
 
-export function applyWeaponTint(weapon, level) {
+export function getWeaponSprite(type, level) {
+    return getLevelSpriteName(`${type}Level1`, Math.min(level, MAX_WEAPON_LEVEL));
+}
+
+export function applyWeaponSprite(weapon, type, level) {
     if (!weapon) return;
-    weapon.color = getLevelColor(level).tint;
+    const spriteName = getWeaponSprite(type, level);
+    weapon.use(sprite(spriteName));
 }
