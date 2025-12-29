@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameCanvas = document.getElementById("game");
 
     const shopModal = document.querySelector('.btn-map.shop');
-    const partyModal = document.querySelector('.btn-map.party');
     const helpModal = document.querySelector('.btn-map.help');
 
     function openModal(selector) {
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     shopModal.addEventListener('click', () => openModal('.modal.shop'));
-    partyModal.addEventListener('click', () => openModal('.modal.party'));
     helpModal.addEventListener('click', () => openModal('.modal.help'));
 
     const closeButtons = document.querySelectorAll('.modal .close-btn');

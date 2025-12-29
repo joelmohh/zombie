@@ -36,7 +36,6 @@ document.addEventListener('keydown', (e) => {
 import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './utils/config.js';
 import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './utils/grid.js';
 import { loadAllSprites } from './utils/assets.js';
-import { updateLeaderboard } from './ui/leaderboard.js';
 import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, potionCatalog, weaponState, MAX_BUILDING_LEVEL, getLevelSpriteName, getWeaponSprite } from './game/defense.js';
 import { initEnemySystem, damageZombie } from './game/enemy.js';
 import { getResource } from './game/world.js';
@@ -47,7 +46,6 @@ import { refreshResourceUI, hasResources, spendResources, showFloatingText } fro
 import { setupBuildingHotkeys, BUILDING_HOTKEYS } from './utils/hotkeys.js';
 
 loadAllSprites()
-updateLeaderboard();
 initDefense();
 initEnemySystem();
 

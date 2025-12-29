@@ -11,13 +11,6 @@
 <body>
 
     <div id="ui-layer">
-        <div class="leaderboard">
-            <h3>Leaderboard</h3>
-            <ul id="leaderboard-list">
-                <!-- will be added by the js -->
-            </ul>
-        </div>
-
         <div class="stats-bar">
             <div class="bar-container">
                 <div class="bar-fill health" id="health-bar-fill"></div>
@@ -79,18 +72,10 @@
             <div class="map-buttons">
                 <button class="btn-map shop">SHOP</button>
                 <button class="btn-map help">HELP</button>
-                <button class="btn-map party">PARTY</button>
             </div>
             <div class="minimap-container">
                 <div id="minimap-player"></div>
             </div>
-            <div class="party-slots">
-                <div class="party-slot" id="party-slot-1"></div>
-                <div class="party-slot" id="party-slot-2"></div>
-                <div class="party-slot" id="party-slot-3"></div>
-                <div class="party-slot" id="party-slot-4"></div>
-            </div>
-
             <div class="resources">
                 <span>Gold:<span class="resources-amount" id="gold-amount">0</span></span>
                 <span>Wood:<span class="resources-amount" id="wood-amount">0</span></span>
@@ -173,46 +158,7 @@
             <p>Get help here...</p>
         </div>
     </div>
-    <div class="modal party">
-        <div class="modal-header">
-            <span>PARTY</span>
-            <button class="close-btn">X</button>
-        </div>
 
-        <div class="modal-content party-content" data-tabs="party">
-            <div class="tab-bar">
-                <button class="tab-link is-active" data-tab-target="your-party">Your Party</button>
-                <button class="tab-link" data-tab-target="public-parties">Public Parties</button>
-            </div>
-
-            <div class="tab-panels">
-                <div class="tab-panel" data-tab-panel="your-party">
-                    <div class="party-panel-heading">
-                        <h4>Your Party</h4>
-                        <button class="pill-btn">Invite</button>
-                    </div>
-                    <ul id="your-party-list" class="party-list">
-                        <li>Empty slot</li>
-                        <li>Empty slot</li>
-                        <li>Empty slot</li>
-                        <li>Empty slot</li>
-                    </ul>
-                </div>
-
-                <div class="tab-panel" data-tab-panel="public-parties" hidden>
-                    <div class="party-panel-heading">
-                        <h4>Public Parties</h4>
-                        <button class="pill-btn">Refresh</button>
-                    </div>
-                    <ul id="public-party-list" class="party-list">
-                        <li>Alpha Squad · open</li>
-                        <li>Builders Only · open</li>
-                        <li>Night Watch · closed</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
 
 
 </body>
