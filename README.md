@@ -1,0 +1,1 @@
+<img src="https://joelmohh.github.io/zombie/public/assets/resources/logo-white.svg" alt="Zombs with out the IO Logo" width="300">
