@@ -70,10 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     obj.id = add([
                         sprite("tree"),
                         pos(obj.x, obj.y),
-                        area({ shape: new Circle(vec2(0), 1) }),
+                        area({ shape: new Circle(vec2(0), 90) }),
                         body({ isStatic: true }),
                         anchor("center"),
-                        scale(10),
+                        scale(1),
                         z(-10),
                         "tree"
                     ]);
@@ -81,10 +81,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     obj.id = add([
                         sprite("stone"),
                         pos(obj.x, obj.y),
-                        area({ shape: new Circle(vec2(0), 1200) }),
+                        area({ shape: new Circle(vec2(0), 100) }),
                         body({ isStatic: true }),
                         anchor("center"),
-                        scale(0.09),
+                        scale(1),
                         z(-10),
                         "rock"
                     ]);

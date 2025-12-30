@@ -19,12 +19,12 @@ const randY = () => Math.floor(Math.random() * MAP_SIZE);
 export function initPlayer() {
     player = add([
         sprite("player"),
-        scale(0.05),
+        scale(0.5),
         pos(randX(), randY()),
         color(255, 255, 0),
         anchor("center"),
         rotate(0),
-        area({ shape: new Circle(vec2(0), 900), collisionIgnore: ["door"] }),
+        area({ shape: new Circle(vec2(0), 70), collisionIgnore: ["door"] }),
         {
             hp: 100,
             maxHp: 100,
@@ -44,8 +44,8 @@ export function initPlayer() {
 
     refreshResourceUI();
 
-    player.add([sprite("hands"), scale(1), pos(800, -300), anchor("center"), z(9)]);
-    player.add([sprite("hands"), scale(1), pos(-800, -300), anchor("center"), z(9)]);
+    player.add([sprite("hands"), scale(1), pos(60, -40), anchor("center"), z(9)]);
+    player.add([sprite("hands"), scale(1), pos(-60, -40), anchor("center"), z(9)]);
 
     setCamScale(ZOOM_LEVEL);
     updateHealth();

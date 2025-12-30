@@ -106,23 +106,23 @@ const potionInventory = {
 function updatePotionUI() {
     const healthSlot = document.getElementById("potion-health");
     const shieldSlot = document.getElementById("potion-shield");
-    
+
     if (healthSlot) {
         if (potionInventory.health > 0) {
             healthSlot.setAttribute('data-type', 'Health');
             healthSlot.setAttribute('data-count', potionInventory.health);
-    }
-    
-    if (shieldSlot) {
-        if (potionInventory.shield > 0) {
-            shieldSlot.setAttribute('data-type', 'Shield');
-            shieldSlot.setAttribute('data-count', potionInventory.shield);
-            shieldSlot.style.display = 'flex';
-        } else {
-            shieldSlot.style.display = 'none';
+        }
+
+        if (shieldSlot) {
+            if (potionInventory.shield > 0) {
+                shieldSlot.setAttribute('data-type', 'Shield');
+                shieldSlot.setAttribute('data-count', potionInventory.shield);
+                shieldSlot.style.display = 'flex';
+            } else {
+                shieldSlot.style.display = 'none';
+            }
         }
     }
-}
 }
 
 updatePotionUI();
@@ -161,11 +161,11 @@ slots.forEach(slot => {
         const spriteName = getWeaponSprite(itemType, level);
 
         if (itemType === 'sword') {
-            equippedWeapon = player.add([sprite(spriteName), pos(700, -700), anchor("center"), scale(1), rotate(90), "weapon", "sword"]);
+            equippedWeapon = player.add([sprite(spriteName), pos(40, -70), anchor("center"), scale(1), rotate(90), "weapon", "sword"]);
         } else if (itemType === "axe") {
-            equippedWeapon = player.add([sprite(spriteName), pos(700, -700), anchor("center"), scale(1), rotate(90), "weapon", "axe"]);
+            equippedWeapon = player.add([sprite(spriteName), pos(40, -70), anchor("center"), scale(1), rotate(90), "weapon", "axe"]);
         } else if (itemType === "bow") {
-            equippedWeapon = player.add([sprite(spriteName), pos(0, -1000), anchor("center"), scale(1), rotate(0), "weapon", "bow"]);
+            equippedWeapon = player.add([sprite(spriteName), pos(0, -100), anchor("center"), scale(1), rotate(0), "weapon", "bow"]);
         }
 
 
@@ -178,7 +178,7 @@ slots.forEach(slot => {
 
 function usePotion(potionType) {
     if (potionInventory[potionType] <= 0) return;
-    
+
     if (potionType === "health") {
         const heal = potionCatalog.health.heal;
         player.hp = Math.min(player.hp + heal, player.maxHp);
@@ -188,7 +188,7 @@ function usePotion(potionType) {
         player.shield = player.maxShield;
         showFloatingText(`+${potionCatalog.shield.shield} Shield`, rgb(100, 150, 255));
     }
-    
+
     potionInventory[potionType]--;
     updatePotionUI();
     updateHealth();
@@ -638,10 +638,10 @@ let selectedStructure = null;
 function getStructureUpgradeCost(structureType, currentLevel) {
     const config = BUILDING_TYPES[structureType];
     if (!config) return { gold: 0, wood: 0, stone: 0 };
-    
+
     const baseCost = config.cost || { wood: 0, stone: 0 };
     const levelMultiplier = 1 + (currentLevel * 0.3);
-    
+
     return {
         gold: Math.round(20 * levelMultiplier),
         wood: Math.round((baseCost.wood || 0) * levelMultiplier),
@@ -665,11 +665,11 @@ function getStructureName(structureType) {
 
 function updateStructureMenu() {
     if (!selectedStructure) return;
-    
+
     const currentLevel = selectedStructure.upgradeLevel || 1;
     const structureType = selectedStructure.structureType;
     const cost = getStructureUpgradeCost(structureType, currentLevel);
-    
+
     const nameEl = document.getElementById("structure-name");
     const levelEl = document.getElementById("structure-level");
     const healthEl = document.getElementById("structure-health");
@@ -677,7 +677,7 @@ function updateStructureMenu() {
     const woodCostEl = document.getElementById("upgrade-cost-wood");
     const stoneCostEl = document.getElementById("upgrade-cost-stone");
     const upgradeBtn = document.getElementById("upgrade-btn");
-    
+
     if (nameEl) nameEl.textContent = getStructureName(structureType);
     if (levelEl) {
         levelEl.textContent = currentLevel;
@@ -687,7 +687,7 @@ function updateStructureMenu() {
     if (goldCostEl) goldCostEl.textContent = cost.gold;
     if (woodCostEl) woodCostEl.textContent = cost.wood;
     if (stoneCostEl) stoneCostEl.textContent = cost.stone;
-    
+
     if (upgradeBtn) {
         if (currentLevel >= MAX_BUILDING_LEVEL) {
             upgradeBtn.textContent = "MAX LEVEL";
@@ -715,7 +715,7 @@ onMousePress("left", () => {
             structureMenu.style.display = "flex";
             structureMenu.style.left = `${screenPos.x}px`;
             structureMenu.style.top = `${screenPos.y}px`;
-            
+
             updateStructureMenu();
 
             isAttacking = true;
@@ -748,7 +748,7 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
         }
 
         const cost = getStructureUpgradeCost(selectedStructure.structureType, currentLevel);
-        
+
         // Check if player has enough resources
         if (player.gold < cost.gold || player.wood < cost.wood || player.stone < cost.stone) {
             showFloatingText("Not enough resources", rgb(255, 100, 100));
@@ -759,7 +759,7 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
         player.gold -= cost.gold;
         player.wood -= cost.wood;
         player.stone -= cost.stone;
-        
+
         refreshResourceUI();
 
         const nextLevel = currentLevel + 1;
@@ -771,9 +771,9 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
 
         applyStructureAppearance(selectedStructure);
         updateBuildingHealthBar(selectedStructure);
-        
+
         showToast(`Upgraded to level ${nextLevel}`, 2000, ToastType.SUCCESS);
-        
+
         updateStructureMenu();
 
         structureMenu.style.display = "none";
@@ -879,10 +879,8 @@ document.querySelectorAll('.shop-item.potion').forEach(btn => {
     });
 });
 
-let x = 0;
-
-while (x  < 1000){
-    x += 1;
+let x
+while (x !== 10) {
     getResource("wood", 1, false);
     getResource("stone", 1, false);
     getResource("gold", 1, false);
