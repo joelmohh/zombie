@@ -25,7 +25,7 @@ export function getResource(type, time = 0, showText) {
     if (player[timerProp] === undefined) player[timerProp] = 0;
     if (player[timerProp] > 0) return;
     if (player[type] !== undefined) {
-        player[type] += 1;
+        player[type] += 1000; // to test 
         player[timerProp] = time;
     }
     const displayElement = document.getElementById(`${type}-amount`);

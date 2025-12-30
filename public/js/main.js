@@ -262,13 +262,14 @@ onUpdate(() => {
         const baseSprite = hasTurret ? (conf.foundationSprite || "backBuildingLevel1") : conf.sprite;
 
         if (!placementGhost) {
+            console.log("Creating new placement ghost for:", currentBuilding);
             placementGhost = add([
                 sprite(baseSprite),
                 opacity(0.5),
                 pos(vec2(idealX, idealY)),
                 anchor("center"),
                 body({ isStatic: true }),
-                scale(0.05),
+                scale(0.6),
                 z(100),
                 "ghost"
             ]);
@@ -289,29 +290,9 @@ onUpdate(() => {
 
             // Update sprite if building type changed
             if (placementGhost.sprite !== baseSprite) {
+                console.log("Updating ghost sprite to:", baseSprite);
                 destroy(placementGhost);
-                placementGhost = add([
-                    sprite(baseSprite),
-                    opacity(0.5),
-                    pos(vec2(idealX, idealY)),
-                    anchor("center"),
-                    body({ isStatic: true }),
-                    scale(0.05),
-                    z(100),
-                    "ghost"
-                ]);
-                if (hasTurret) {
-                    placementGhost.add([
-                        sprite(conf.sprite),
-                        pos(0, 0),
-                        anchor("center"),
-                        scale(1),
-                        rotate(0),
-                        opacity(0.5),
-                        z(101),
-                        "turret"
-                    ]);
-                }
+                
             } else {
                 placementGhost.scaleTo = baseScale;
             }
@@ -397,7 +378,6 @@ function buildStructure(type, position) {
     }
 
     const hasTurret = structure.isDefense;
-    const baseScale = hasTurret ? (structure.scale) : structure.scale;
     const foundationBaseSprite = hasTurret ? (structure.foundationSprite || "backBuildingLevel1") : structure.sprite;
     const foundationSprite = getLevelSpriteName(foundationBaseSprite, 1);
     const turretBaseSprite = hasTurret ? structure.sprite : null;
@@ -409,7 +389,7 @@ function buildStructure(type, position) {
         anchor("center"),
         area(type === "door" ? { collisionIgnore: ["player"] } : {}),
         body({ isStatic: true }),
-        scale(baseScale),
+        scale(1),
         z(0),
         type,
         "structure",
@@ -879,9 +859,3 @@ document.querySelectorAll('.shop-item.potion').forEach(btn => {
     });
 });
 
-let x
-while (x !== 10) {
-    getResource("wood", 1, false);
-    getResource("stone", 1, false);
-    getResource("gold", 1, false);
-}
