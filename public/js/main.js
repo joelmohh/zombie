@@ -99,9 +99,13 @@ onUpdate(() => {
 })
 
 onKeyDown('w', () => player.move(0, -SPEED));
+onKeyDown('arrowup', () => player.move(0, -SPEED));
 onKeyDown('s', () => player.move(0, SPEED));
+onKeyDown('arrowdown', () => player.move(0, SPEED));
 onKeyDown('a', () => player.move(-SPEED, 0));
+onKeyDown('arrowleft', () => player.move(-SPEED, 0));
 onKeyDown('d', () => player.move(SPEED, 0));
+onKeyDown('arrowright', () => player.move(SPEED, 0));
 
 // INVENTORY
 let equippedWeapon = null;
