@@ -1,0 +1,36 @@
+{
+  "bowLevel3": { "x": 673, "y": 453, "width": 173, "height": 190 },
+  "bowLevel4": { "x": 0, "y": 537, "width": 173, "height": 190 },
+  "bowLevel5": { "x": 174, "y": 537, "width": 173, "height": 190 },
+  "bowLevel6": { "x": 348, "y": 537, "width": 173, "height": 190 },
+  "bowLevel7": { "x": 0, "y": 84, "width": 173, "height": 190 },
+  "bowLevel1": { "x": 322, "y": 275, "width": 173, "height": 190 },
+  "bowLevel2": { "x": 673, "y": 0, "width": 173, "height": 190 },
+
+  "healthPotion": { "x": 522, "y": 537, "width": 68, "height": 83 },
+  "shieldPotion": { "x": 0, "y": 0, "width": 68, "height": 83 },
+
+  "swordLevel1": { "x": 337, "y": 0, "width": 51, "height": 261 },
+  "swordLevel2": { "x": 673, "y": 191, "width": 51, "height": 261 },
+  "swordLevel3": { "x": 479, "y": 0, "width": 51, "height": 261 },
+  "swordLevel4": { "x": 0, "y": 275, "width": 51, "height": 261 },
+  "swordLevel5": { "x": 725, "y": 191, "width": 51, "height": 261 },
+  "swordLevel6": { "x": 531, "y": 0, "width": 51, "height": 261 },
+  "swordLevel7": { "x": 531, "y": 262, "width": 51, "height": 261 },
+
+  "axeLevel1": { "x": 247, "y": 0, "width": 89, "height": 251 },
+  "axeLevel2": { "x": 583, "y": 252, "width": 89, "height": 251 },
+  "axeLevel3": { "x": 583, "y": 0, "width": 89, "height": 251 },
+  "axeLevel4": { "x": 52, "y": 275, "width": 89, "height": 251 },
+  "axeLevel5": { "x": 389, "y": 0, "width": 89, "height": 251 },
+  "axeLevel6": { "x": 232, "y": 275, "width": 89, "height": 251 },
+  "axeLevel7": { "x": 142, "y": 275, "width": 89, "height": 251 },
+
+  "bombLevel1": { "x": 595, "y": 621, "width": 72, "height": 76 },
+  "bombLevel2": { "x": 174, "y": 77, "width": 72, "height": 76 },
+  "bombLevel3": { "x": 174, "y": 0, "width": 72, "height": 76 },
+  "bombLevel4": { "x": 591, "y": 537, "width": 72, "height": 76 },
+  "bombLevel5": { "x": 522, "y": 621, "width": 72, "height": 76 },
+  "bombLevel6": { "x": 673, "y": 644, "width": 72, "height": 76 },
+  "bombLevel7": { "x": 174, "y": 154, "width": 72, "height": 76 }
+}

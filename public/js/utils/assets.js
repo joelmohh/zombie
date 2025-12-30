@@ -10,9 +10,9 @@ function loadSafeSprite(name, url) {
 }
 
 export function loadAllSprites() {
-    loadSpriteAtlas('/assets/weapon/weaponSprites.png', '/public/assets/weapon/weaponSpritesMap.json');
-    loadSpriteAtlas('/assets/resources/resourcesSprites.png', '/public/assets/resources/resourcesSpriteMap.json');
-    loadSpriteAtlas('/assets/buildings/buildingsSprites.png', '/public/assets/buildings/buildingsSpriteMap.json');
+    loadSpriteAtlas('/public/assets/weapon/weaponSprites.png', '/public/assets/weapon/weaponSpritesMap.json');
+    loadSpriteAtlas('/public/assets/resources/resourcesSprites.png', '/public/assets/resources/resourcesSpriteMap.json');
+    loadSpriteAtlas('/public/assets/buildings/buildingsSprites.png', '/public/assets/buildings/buildingsSpriteMap.json');
 
 
     /* All sprites, commented because they are too heavy to load all at once

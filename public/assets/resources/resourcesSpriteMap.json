@@ -1,0 +1,6 @@
+{
+  "hands": { "x": 144, "y": 182, "width": 50, "height": 50 },
+  "player": { "x": 0, "y": 182, "width": 143, "height": 143 },
+  "stone": { "x": 200, "y": 0, "width": 250, "height": 240 },
+  "tree": { "x": 0, "y": 0, "width": 199, "height": 181 }
+}
