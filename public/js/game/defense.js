@@ -82,7 +82,7 @@ function createProjectile(posValue, angle, config) {
         sprite(config.bulletSprite || "swordLevel1"), 
         pos(posValue),
         anchor("center"),
-        scale(0.05),
+        scale(0.6),
         rotate(angle),
         area(),
         move(angle, speed),
