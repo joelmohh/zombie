@@ -6,12 +6,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://joelmohh.github.io/zombie//public/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/8.3.2/introjs.min.css">
+    <script src="https://kit.fontawesome.com/9721ff28a8.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
 
     <div id="ui-layer">
-        <div class="stats-bar">
+        <div class="stats-bar" data-intro="This is your health bar. Keep it full to survive!" data-step="2">
             <div class="bar-container">
                 <div class="bar-fill health" id="health-bar-fill"></div>
                 <span id="health-text">Health</span>
@@ -23,7 +25,7 @@
         </div>
         <div class="bottom-center">
 
-            <div class="construction-bar">
+            <div class="construction-bar" data-intro="Here are the structures you can build. Click one and then on the map to build. You need resources!" data-step="5">
                 <div class="slot construction-action" data-id="wall">
                     <img src="https://joelmohh.github.io/zombie//public/assets/buildings/wallLevel1.svg" alt="Wall">
                 </div>
@@ -55,7 +57,7 @@
                     <img src="https://joelmohh.github.io/zombie//public/assets/buildings/doorLevel1.svg" alt="Door">
                 </div>
             </div>
-            <div class="inventory">
+            <div class="inventory" data-intro="This is your weapon inventory. Click on a weapon to equip it. Use keys 1-5 to switch quickly!" data-step="6">
                 <div class="slot" data-index="0" data-item="sword"><img src="https://joelmohh.github.io/zombie//public/assets/weapon/swordLevel1.svg" class="icon"></div>
                 <div class="slot" data-index="1" data-item="axe"><img src="https://joelmohh.github.io/zombie//public/assets/weapon/axeLevel1.svg" class="icon"></div>
                 <div class="slot" data-index="2" data-item="bow"><img src="https://joelmohh.github.io/zombie//public/assets/weapon/bowLevel1.svg" class="icon"></div>
@@ -70,13 +72,13 @@
 
         <div class="bottom-right">
             <div class="map-buttons">
-                <button class="btn-map shop">SHOP</button>
+                <button class="btn-map shop" data-intro="In the shop you can upgrade your weapons and buy healing potions!" data-step="7">SHOP</button>
                 <button class="btn-map help">HELP</button>
             </div>
             <div class="minimap-container">
                 <div id="minimap-player"></div>
             </div>
-            <div class="resources">
+            <div class="resources" data-intro="Your resources: Gold, Wood, and Stone. Collect them on the map and use them to build and upgrade!" data-step="4">
                 <span>Gold:<span class="resources-amount" id="gold-amount">0</span></span>
                 <span>Wood:<span class="resources-amount" id="wood-amount">0</span></span>
                 <span>Stone:<span class="resources-amount" id="stone-amount">0</span></span>
@@ -90,10 +92,12 @@
         <button id="delete-btn"
             style="background: #e74c3c; color: white; border: none; padding: 5px 10px; cursor: pointer; font-family: 'Courier New'; font-weight: bold;">DELETE</button>
     </div>
-    <canvas id="game"></canvas>
+    <canvas id="game" data-intro="This is the game field where you control your character (WASD) and build defenses." data-step="1"></canvas>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/8.3.2/intro.js"></script>
     <script type="module" src="public/js/main.js"></script>
     <script src="https://joelmohh.github.io/zombie//public/js/ui/modals.js"></script>
+    <script src="public/js/tutorial.js"></script>
 
     <div class="modal shop">
         <div class="modal-header">
@@ -148,29 +152,6 @@
             </div>
         </div>
     </div>
-    <div class="modal help">
-        <div class="modal-header">
-            <span>HELP</span>
-            <button class="close-btn">X</button>
-        </div>
-
-        <div class="modal-content">
-            <p>How to play the game:</p>
-            <p>To play the game you need to have this things in mind:</p>
-            <ul>
-                <li>First of all you need to build a gold-mine (second structure in the bar)</li>
-                <li>Use WASD keys to move your character.</li>
-                <li>Use the mouse to aim and left click to attack.</li>
-                <li>Collect resources like wood, stone and gold to build structures and upgrade your weapons.</li>
-                <li>Build walls and towers to defend yourself from zombies.</li>
-                <li>Use potions to heal yourself or gain a shield.</li>
-                <li>Survive as long as you can!</li>
-            </ul>
-        </div>
-    </div>
-
-
-
 </body>
 
 </html>

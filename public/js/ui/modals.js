@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameCanvas = document.getElementById("game");
 
     const shopModal = document.querySelector('.btn-map.shop');
-    const helpModal = document.querySelector('.btn-map.help');
 
     function openModal(selector) {
         const modal = document.querySelector(selector);
@@ -11,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     shopModal.addEventListener('click', () => openModal('.modal.shop'));
-    helpModal.addEventListener('click', () => openModal('.modal.help'));
 
     const closeButtons = document.querySelectorAll('.modal .close-btn');
     closeButtons.forEach(button => {
