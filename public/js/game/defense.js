@@ -87,6 +87,7 @@ function createProjectile(posValue, angle, config) {
         area(),
         move(angle, speed),
         lifespan(lifetime, { fade: 0.2 }),
+        opacity(1),
         offscreen({ destroy: true }),
         "projectile", 
         { 
@@ -116,6 +117,7 @@ function createExplosion(posValue, radius, damage) {
         pos(posValue),
         anchor("center"),
         lifespan(0.15),
+        opacity(0.6)
     ]);
 
     get("zombie").forEach(z => {

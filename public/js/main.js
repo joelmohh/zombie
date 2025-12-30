@@ -258,7 +258,6 @@ onUpdate(() => {
         const idealY = snapped.y;
 
         const hasTurret = conf.isDefense;
-        const baseScale = hasTurret ? (conf.scale * 3) : conf.scale;
         const baseSprite = hasTurret ? (conf.foundationSprite || "backBuildingLevel1") : conf.sprite;
 
         if (!placementGhost) {
@@ -271,7 +270,8 @@ onUpdate(() => {
                 body({ isStatic: true }),
                 scale(0.6),
                 z(100),
-                "ghost"
+                "ghost",
+                { buildingType: currentBuilding }
             ]);
             if (hasTurret) {
                 placementGhost.add([
@@ -289,12 +289,10 @@ onUpdate(() => {
             placementGhost.pos = vec2(idealX, idealY);
 
             // Update sprite if building type changed
-            if (placementGhost.sprite !== baseSprite) {
-                console.log("Updating ghost sprite to:", baseSprite);
+            if (placementGhost.buildingType !== currentBuilding) {
+                console.log("Updating ghost from", placementGhost.buildingType, "to:", currentBuilding);
                 destroy(placementGhost);
-                
-            } else {
-                placementGhost.scaleTo = baseScale;
+                placementGhost = null;
             }
         }
 
@@ -340,7 +338,9 @@ onUpdate(() => {
         }
 
         canBuildHere = isFree;
-        placementGhost.color = isFree ? rgb(255, 255, 255) : rgb(255, 100, 100);
+        if (placementGhost) {
+            placementGhost.color = isFree ? rgb(255, 255, 255) : rgb(255, 100, 100);
+        }
 
     } else {
         if (placementGhost) {
@@ -389,7 +389,7 @@ function buildStructure(type, position) {
         anchor("center"),
         area(type === "door" ? { collisionIgnore: ["player"] } : {}),
         body({ isStatic: true }),
-        scale(1),
+        scale(0.6),
         z(0),
         type,
         "structure",
@@ -401,7 +401,6 @@ function buildStructure(type, position) {
             structureType: type,
             cost: structure.cost,
             upgradeLevel: 1,
-            baseScale: baseScale,
             foundationBaseSprite,
             turretBaseSprite
         }
