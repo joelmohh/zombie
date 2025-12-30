@@ -33,7 +33,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './utils/config.js';
+import { MAP_SIZE, SPEED, BUILDING_TYPES, WORLD_PADDING } from './utils/config.js';
 import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './utils/grid.js';
 import { loadAllSprites } from './utils/assets.js';
 import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, potionCatalog, weaponState, MAX_BUILDING_LEVEL, getLevelSpriteName, getWeaponSprite } from './game/defense.js';
@@ -120,16 +120,19 @@ function updatePotionUI() {
         if (potionInventory.health > 0) {
             healthSlot.setAttribute('data-type', 'Health');
             healthSlot.setAttribute('data-count', potionInventory.health);
+            healthSlot.style.display = 'flex';
+        } else {
+            healthSlot.style.display = 'none';
         }
+    }
 
-        if (shieldSlot) {
-            if (potionInventory.shield > 0) {
-                shieldSlot.setAttribute('data-type', 'Shield');
-                shieldSlot.setAttribute('data-count', potionInventory.shield);
-                shieldSlot.style.display = 'flex';
-            } else {
-                shieldSlot.style.display = 'none';
-            }
+    if (shieldSlot) {
+        if (potionInventory.shield > 0) {
+            shieldSlot.setAttribute('data-type', 'Shield');
+            shieldSlot.setAttribute('data-count', potionInventory.shield);
+            shieldSlot.style.display = 'flex';
+        } else {
+            shieldSlot.style.display = 'none';
         }
     }
 }
@@ -224,10 +227,23 @@ onUpdate("gold-miner", (m) => {
         if (spinner.angle >= 360) spinner.angle -= 360;
     }
 
-    getResource("gold", 0.1);
-
+    const level = m.upgradeLevel || 1;
+    const baseRate = 3; 
+    const rateMultiplier = 1 + (level - 1) * 0.5; 
+    const goldPerFrame = (baseRate * rateMultiplier) * dt();
+    
+    if (!m.goldAccumulator) m.goldAccumulator = 0;
+    m.goldAccumulator += goldPerFrame;
+    
+    if (m.goldAccumulator >= 1) {
+        const goldToAdd = Math.floor(m.goldAccumulator);
+        player.gold += goldToAdd;
+        m.goldAccumulator -= goldToAdd;
+        
+        const displayElement = document.getElementById('gold-amount');
+        if (displayElement) displayElement.innerText = player.gold;
+    }
 });
-
 
 let currentBuilding = null;
 let placementGhost = null;
@@ -579,10 +595,12 @@ function performAttack() {
         opacity(0),
         "hit"
     ]);
-
     hitbox.onCollide("tree", (t) => {
         if (equippedWeapon.is("axe")) {
-            getResource("wood");
+            const axeLevel = weaponState.axe?.level || 1;
+            const baseAmount = 1;
+            const collectAmount = baseAmount + Math.floor((axeLevel - 1) * 0.3);
+            getResource("wood", collectAmount);
             const originalX = t.pos.x;
             tween(originalX, originalX + 5, 0.05, (v) => t.pos.x = v)
                 .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => t.pos.x = v))
@@ -591,7 +609,10 @@ function performAttack() {
     });
     hitbox.onCollide("rock", (r) => {
         if (equippedWeapon.is("axe")) {
-            getResource("stone");
+            const axeLevel = weaponState.axe?.level || 1;
+            const baseAmount = 1;
+            const collectAmount = baseAmount + Math.floor((axeLevel - 1) * 0.3); 
+            getResource("stone", collectAmount);
             const originalX = r.pos.x;
             tween(originalX, originalX + 5, 0.05, (v) => r.pos.x = v)
                 .then(() => tween(originalX + 5, originalX - 5, 0.05, (v) => r.pos.x = v))
@@ -763,8 +784,6 @@ document.getElementById("upgrade-btn").addEventListener("click", () => {
 
         applyStructureAppearance(selectedStructure);
         updateBuildingHealthBar(selectedStructure);
-
-        showToast(`Upgraded to level ${nextLevel}`, 2000, ToastType.SUCCESS);
 
         updateStructureMenu();
 

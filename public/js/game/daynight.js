@@ -51,7 +51,7 @@ function onNightStart() {
     zombiesThisWave = 0;
     console.log(`Night ${currentWave} has begun!`);
     
-    if(getLocalStorageItem('hadGoldMine') == 'true') {
+    if(localStorage.getItem('hadGoldMine') == 'true') {
         import('../ui/toast.js').then(module => {
             module.showToast(`🌙 Night ${currentWave} - Zombies are coming!`, 3000, module.ToastType.WARNING);
         });

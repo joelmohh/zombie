@@ -21,13 +21,12 @@ for (let i = 0; i < TOTAL_ROCKS; i++) {
     WORLD_OBJECTS.push({ x: seededRandom() * MAP_SIZE, y: seededRandom() * MAP_SIZE, type: "rock", id: null });
 }
 
-export function getResource(type, time = 0, showText) {
+export function getResource(type, amount = 1, showText) {
     const timerProp = `${type}Timer`;
     if (player[timerProp] === undefined) player[timerProp] = 0;
     if (player[timerProp] > 0) return;
     if (player[type] !== undefined) {
-        player[type] += 1000; // to test 
-        player[timerProp] = time;
+        player[type] += amount * 1000;
     }
     const displayElement = document.getElementById(`${type}-amount`);
     if (displayElement) {
