@@ -1,6 +1,7 @@
 import { MAP_SIZE, THICKNESS, GRID_SIZE, WORLD_PADDING } from "../utils/config.js";
 import { player } from "../main.js";
 import { updateHealth, updateBuildingHealthBar } from "../ui/healthbars.js";
+import { handlePlayerDeath } from "./gameover.js";
 
 const WORLD_SEED = 12345;
 const TOTAL_TREES = 40;
@@ -166,10 +167,7 @@ export function applyDamage(target, amount) {
         updateHealth();
         if (target.hp <= 0) {
             shake(20);
-            target.hp = target.maxHp;
-            target.pos = vec2(1000, 1000);
-            target.shield = 0;
-            updateHealth();
+            handlePlayerDeath(target);
         }
     } else if (target.is("structure")) {
         target.hp = Math.max(0, target.hp - remaining);

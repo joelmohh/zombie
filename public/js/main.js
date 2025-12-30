@@ -37,18 +37,21 @@ import { MAP_SIZE, ZOOM_LEVEL, SPEED, BUILDING_TYPES, WORLD_PADDING } from './ut
 import { snapToGrid, isAreaFree, occupyArea, freeCells, isRectWithinBounds } from './utils/grid.js';
 import { loadAllSprites } from './utils/assets.js';
 import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, potionCatalog, weaponState, MAX_BUILDING_LEVEL, getLevelSpriteName, getWeaponSprite } from './game/defense.js';
-import { initEnemySystem, damageZombie } from './game/enemy.js';
+import { initEnemySystem, damageZombie, updateEnemySpawning } from './game/enemy.js';
 import { getResource } from './game/world.js';
 import { showToast, ToastType } from './ui/toast.js';
 import { initPlayer, updatePlayerMovement, setupPlayerControls, getAttackOffset, setAttackOffset } from './game/player.js';
 import { updateHealth, updateBuildingHealthBar } from './ui/healthbars.js';
 import { refreshResourceUI, hasResources, spendResources, showFloatingText } from './ui/resources.js';
 import { setupBuildingHotkeys } from './utils/hotkeys.js';
+import { initDayNightSystem, updateDayNightCycle } from './game/daynight.js';
+import { isGameOver, checkGoldMineStatus, resetGameOverState } from './game/gameover.js';
 
 loadAllSprites()
 initDefense();
 initEnemySystem();
-
+initDayNightSystem();
+resetGameOverState();
 
 // Focus on canvas
 
@@ -68,7 +71,13 @@ setupPlayerControls();
 
 // UPDATE LOOP
 onUpdate(() => {
+    if (isGameOver) return;
+
     updatePlayerMovement();
+
+    updateDayNightCycle(dt());
+    updateEnemySpawning(dt());
+    checkGoldMineStatus();
 
     const mouseWorld = toWorld(mousePos());
     const direction = mouseWorld.sub(player.pos)
@@ -424,6 +433,10 @@ function buildStructure(type, position) {
         building.onDestroy(() => freeCells(cells));
     }
     applyStructureAppearance(building);
+
+    if (type === "gold-mine") {
+        localStorage.setItem('hadGoldMine', 'true');
+    }
 }
 
 // Key Bindings

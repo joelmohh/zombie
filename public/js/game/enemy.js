@@ -1,21 +1,17 @@
 import { applyDamage } from "./world.js"; 
 import { isAreaFree } from "../utils/grid.js"; 
 import { MAP_SIZE, GRID_SIZE, WORLD_PADDING } from "../utils/config.js";
+import { canSpawnZombies, getWaveMultiplier, incrementZombieCount } from "./daynight.js";
 
 const ZOMBIE_SPEED = 50;
 const ZOMBIE_DMG = 10;
 const ATTACK_SPEED = 1.0; 
-const ATTACK_RANGE = 80;  // Real attack distance
-const DETECTION_RANGE = 200;  // Detection distance for large structures  
+const ATTACK_RANGE = 80;  
+
+let spawnTimer = 0;
+const SPAWN_INTERVAL = 3; 
 
 export function initEnemySystem() {
-    loop(5, () => {
-        const mainBase = get("gold-mine")[0];
-        if (mainBase) {
-            spawnHorde(mainBase.pos);
-        }
-    });
-
     onUpdate("zombie", (z) => {
         if (z.attackTimer === undefined) z.attackTimer = 0;
         if (z.attackTimer > 0) z.attackTimer -= dt();
@@ -46,8 +42,28 @@ export function initEnemySystem() {
     });
 }
 
-function spawnHorde(basePos) {
-    const quantity = 15; 
+export function updateEnemySpawning(dt) {
+    if (!canSpawnZombies()) {
+        return;
+    }
+    
+    spawnTimer += dt;
+    
+    if (spawnTimer >= SPAWN_INTERVAL) {
+        spawnTimer = 0;
+        
+        const mainBase = get("gold-mine")[0];
+        
+        if (mainBase && mainBase.pos) {
+            spawnWaveZombies(mainBase.pos);
+        }
+    }
+}
+
+function spawnWaveZombies(basePos) {
+    const waveMultiplier = getWaveMultiplier();
+    const baseQuantity = 5; 
+    const quantity = Math.floor(baseQuantity * waveMultiplier);
     const spawnRadius = 1000;
 
     for (let i = 0; i < quantity; i++) {
@@ -69,6 +85,7 @@ function spawnHorde(basePos) {
 
             if (!isNearStructure(spawnPos, 100)) {
                 spawnZombie(spawnPos);
+                incrementZombieCount();
                 spawned = true;
             }
         }
@@ -98,35 +115,15 @@ function findTargetInRange(pos, range) {
     for (const s of structures) {
         const d = pos.dist(s.pos);
         
-        // Check if structure is large (gold-mine, gold-miner)
         const isLargeStructure = s.width >= 100;
         
-        // For large structures, need to account for their size
         const structureRadius = isLargeStructure ? (s.width * (s.scale?.x || 0.05)) / 2 : 25;
         
-        // Zombie can attack if within range + structure radius
         if (d <= range + structureRadius) {
             if (d < minDist) {
                 minDist = d;
                 nearest = s;
             }
-        }
-    }
-    return nearest;
-}
-
-function findNearestGoldMine(zombiePos) {
-    const mines = get("gold-mine");
-    if (mines.length === 0) return null;
-
-    let nearest = null;
-    let minDist = Infinity;
-
-    for (const mine of mines) {
-        const d = zombiePos.dist(mine.pos);
-        if (d < minDist) {
-            minDist = d;
-            nearest = mine;
         }
     }
     return nearest;
@@ -142,7 +139,6 @@ function performAttack(zombie, target) {
         if (zombie.exists()) zombie.pos = originalPos;
     }, 100);
 
-    // Apply damage to target
     if (target && target.exists()) {
         applyDamage(target, ZOMBIE_DMG);
     }
@@ -150,6 +146,10 @@ function performAttack(zombie, target) {
 
 export function spawnZombie(position) {
     const safePos = findSafeSpawn(position);
+    
+    const waveMultiplier = getWaveMultiplier();
+    const baseHP = 100;
+    const maxHp = Math.floor(baseHP * waveMultiplier);
 
     const zombie = add([
         circle(20),
@@ -159,10 +159,9 @@ export function spawnZombie(position) {
         body(), 
         pos(safePos),
         "zombie",
-        { hp: 100, maxHp: 100 }
+        { hp: maxHp, maxHp: maxHp }
     ]);
 
-    // Health bar background (hidden initially)
     zombie.add([
         rect(40, 6),
         pos(0, -30),
@@ -173,7 +172,6 @@ export function spawnZombie(position) {
         "zombie-health-bg"
     ]);
 
-    // Health bar fill (hidden initially)
     zombie.add([
         rect(36, 4),
         pos(-18, -30),
@@ -240,7 +238,6 @@ export function damageZombie(zombie, dmg) {
         zombie.color = rgb(255, 100, 100);
         wait(0.1, () => zombie.color = rgb(150, 50, 50));
 
-        // Show and update health bar
         const healthBg = zombie.get("zombie-health-bg")[0];
         const healthFill = zombie.get("zombie-health-fill")[0];
         
