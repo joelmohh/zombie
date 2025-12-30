@@ -70,10 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     obj.id = add([
                         sprite("tree"),
                         pos(obj.x, obj.y),
-                        area({ shape: new Circle(vec2(0), 1000) }),
+                        area({ shape: new Circle(vec2(0), 1) }),
                         body({ isStatic: true }),
                         anchor("center"),
-                        scale(0.1),
+                        scale(10),
                         z(-10),
                         "tree"
                     ]);

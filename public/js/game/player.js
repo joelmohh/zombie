@@ -13,11 +13,14 @@ export function setAttackOffset(value) {
     attackOffset = value;
 }
 
+const randX = () => Math.floor(Math.random() * MAP_SIZE);
+const randY = () => Math.floor(Math.random() * MAP_SIZE);
+
 export function initPlayer() {
     player = add([
         sprite("player"),
         scale(0.05),
-        pos(center()),
+        pos(randX(), randY()),
         color(255, 255, 0),
         anchor("center"),
         rotate(0),

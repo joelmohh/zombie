@@ -10,6 +10,11 @@ function loadSafeSprite(name, url) {
 }
 
 export function loadAllSprites() {
+    loadSpriteAtlas('/assets/weapon/weaponSprites.png', '/public/assets/weapon/weaponSpritesMap.json');
+    loadSpriteAtlas('/assets/resources/resources.png', '/public/assets/resources/resourcesSpriteMap.json');
+
+
+    /* All sprites, commented because they are too heavy to load all at once
     // Player and Hands
     loadSafeSprite("player", "https://joelmohh.github.io/zombie/public/assets/resources/player.svg");
     loadSafeSprite("hands", "https://joelmohh.github.io/zombie/public/assets/resources/hands.svg");
@@ -50,7 +55,7 @@ export function loadAllSprites() {
     // Resources
     loadSafeSprite("tree", "https://joelmohh.github.io/zombie/public/assets/resources/tree.svg");
     loadSafeSprite("stone", "https://joelmohh.github.io/zombie/public/assets/resources/stone.svg");
-    
+
     // Buildings - Wall
     loadSafeSprite('wallLevel1', 'https://joelmohh.github.io/zombie/public/assets/buildings/wallLevel1.svg');
     loadSafeSprite('wallLevel2', 'https://joelmohh.github.io/zombie/public/assets/buildings/wallLevel2.svg');
@@ -127,5 +132,5 @@ export function loadAllSprites() {
     // Potions
     loadSafeSprite("healthPotion", "https://joelmohh.github.io/zombie/public/assets/weapon/healthPotion.svg");
     loadSafeSprite("shieldPotion", "https://joelmohh.github.io/zombie/public/assets/weapon/shieldPotion.svg");
-
+    */
 }

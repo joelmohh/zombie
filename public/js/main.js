@@ -40,10 +40,10 @@ import { initDefense, applyWeaponSprite, getWeaponUpgradeCost, getWeaponDamage, 
 import { initEnemySystem, damageZombie } from './game/enemy.js';
 import { getResource } from './game/world.js';
 import { showToast, ToastType } from './ui/toast.js';
-import { initPlayer, updatePlayerMovement, setupPlayerControls, player as gamePlayer, getAttackOffset, setAttackOffset } from './game/player.js';
+import { initPlayer, updatePlayerMovement, setupPlayerControls, getAttackOffset, setAttackOffset } from './game/player.js';
 import { updateHealth, updateBuildingHealthBar } from './ui/healthbars.js';
 import { refreshResourceUI, hasResources, spendResources, showFloatingText } from './ui/resources.js';
-import { setupBuildingHotkeys, BUILDING_HOTKEYS } from './utils/hotkeys.js';
+import { setupBuildingHotkeys } from './utils/hotkeys.js';
 
 loadAllSprites()
 initDefense();
@@ -424,8 +424,7 @@ function buildStructure(type, position) {
             baseScale: baseScale,
             foundationBaseSprite,
             turretBaseSprite
-        },
-        offscreen({ hide: true, pause: true, distance: 300 })
+        }
     ]);
 
     if (hasTurret) {
@@ -879,3 +878,12 @@ document.querySelectorAll('.shop-item.potion').forEach(btn => {
         consumePotion(potionKey);
     });
 });
+
+let x = 0;
+
+while (x  < 1000){
+    x += 1;
+    getResource("wood", 1, false);
+    getResource("stone", 1, false);
+    getResource("gold", 1, false);
+}
