@@ -540,8 +540,3 @@ canvas {
     border-color: #e74c3c;
     background: rgba(231, 76, 60, 1);
 }
-
-.introjs-tooltip{
-    font-family: 'Courier New', Courier, monospace;
-    min-width: 1000px;
-}
