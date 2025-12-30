@@ -26,7 +26,7 @@ export function getResource(type, amount = 1, showText) {
     if (player[timerProp] === undefined) player[timerProp] = 0;
     if (player[timerProp] > 0) return;
     if (player[type] !== undefined) {
-        player[type] += amount * 1000;
+        player[type] += amount;
     }
     const displayElement = document.getElementById(`${type}-amount`);
     if (displayElement) {
