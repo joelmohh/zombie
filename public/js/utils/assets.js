@@ -10,9 +10,9 @@ function loadSafeSprite(name, url) {
 }
 
 export function loadAllSprites() {
-    loadSpriteAtlas('https://zombie.joelmo.devpublic/assets/weapon/weaponSprites.png', 'https://zombie.joelmo.devpublic/assets/weapon/weaponSpritesMap.json');
-    loadSpriteAtlas('https://zombie.joelmo.devpublic/assets/resources/resourcesSprites.png', 'https://zombie.joelmo.devpublic/assets/resources/resourcesSpriteMap.json');
-    loadSpriteAtlas('https://zombie.joelmo.devpublic/assets/buildings/buildingsSprites.png', 'https://zombie.joelmo.devpublic/assets/buildings/buildingsSpriteMap.json');
+    loadSpriteAtlas('https://zombie.joelmo.dev/public/assets/weapon/weaponSprites.png', 'https://zombie.joelmo.dev/public/assets/weapon/weaponSpritesMap.json');
+    loadSpriteAtlas('https://zombie.joelmo.dev/public/assets/resources/resourcesSprites.png', 'https://zombie.joelmo.dev/public/assets/resources/resourcesSpriteMap.json');
+    loadSpriteAtlas('https://zombie.joelmo.dev/public/assets/buildings/buildingsSprites.png', 'https://zombie.joelmo.dev/public/assets/buildings/buildingsSpriteMap.json');
 
 
     /* All sprites, commented because they are too heavy to load all at once
