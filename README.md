@@ -1,4 +1,4 @@
-<img  style="display: block; margin: 0 auto;" src="https://joelmohh.github.io/zombie/public/assets/resources/logo-white.svg" alt="Zombs with out the IO Logo" width="300">
+<img  style="display: block; margin: 0 auto;" src="https://zombie.joelmo.devpublic/assets/resources/logo-white.svg" alt="Zombs with out the IO Logo" width="300">
 <img  style="display: block; margin: 10px auto;" src="https://hackatime-badge.hackclub.com/U0A19UWEN3G/zombie" alt="Survive Logo">
 
 ## Zombs with out the IO - Survive
